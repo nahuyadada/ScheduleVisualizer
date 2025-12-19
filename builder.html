@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,51 +8,87 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="builder.css">
 </head>
+
 <body>
-    <div class="container">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-logo">📅</span>
+        </div>
+        <div class="sidebar-nav">
+            <a href="index.html" class="nav-item" title="Home">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-text">Home</span>
+            </a>
+            <a href="compare.html" class="nav-item" title="Compare Schedules">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Compare</span>
+            </a>
+            <a href="builder.html" class="nav-item active" title="Build New Schedule">
+                <span class="nav-icon">🔧</span>
+                <span class="nav-text">Build</span>
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <button class="nav-item restart-nav" onclick="location.reload()" title="Restart">
+                <span class="nav-icon">🔄</span>
+                <span class="nav-text">Restart</span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="container with-sidebar">
         <header>
-            <h1>🆕 Build New Schedule</h1>
-            <p>Load a saved schedule, then drag subjects to build a new one.</p>
-            <a href="index.html" class="back-btn">← Back to Main</a>
+            <h1>🔧 Build New Schedule</h1>
+            <p>Select a saved schedule on the left, then drag subjects to build a new one on the right.</p>
         </header>
 
-        <div class="builder-selectors">
-            <div class="selector-box">
-                <h3>Saved Schedule</h3>
-                <select id="savedScheduleSelect">
-                    <option value="">-- Select a saved schedule --</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="builder-schedule-panel" id="savedSchedulePanel">
-            <div class="panel-header">
-                <h3 id="savedScheduleTitle">Select a saved schedule</h3>
+        <div class="builder-container">
+            <!-- Left Panel: Saved Schedule -->
+            <div class="builder-panel source-panel">
+                <div class="panel-header">
+                    <h3>📂 Source Schedule</h3>
+                    <select id="savedScheduleSelect">
+                        <option value="">-- Select a saved schedule --</option>
+                    </select>
+                </div>
+                <div class="panel-title" id="savedScheduleTitle">Select a schedule to start</div>
                 <div class="panel-stats" id="savedScheduleStats"></div>
+                <div class="panel-grid-container">
+                    <div class="schedule-grid" id="savedScheduleGrid">
+                        <div class="empty-panel">Select a schedule to preview</div>
+                    </div>
+                </div>
+                <div class="panel-legend" id="savedScheduleLegend"></div>
             </div>
-            <div class="panel-grid-container">
-                <div class="schedule-grid" id="savedScheduleGrid"></div>
-            </div>
-            <div class="panel-legend" id="savedScheduleLegend"></div>
-        </div>
 
-        <div class="new-schedule-builder" id="newScheduleBuilder">
-            <h2>🆕 Build Area</h2>
-            <p class="builder-hint">Drag courses from the schedule above to build a new one. Dragging a course will include all sessions with that course code and section.</p>
-            <div class="builder-drop-zone" id="builderDropZone">
-                <div class="drop-zone-content" id="dropZoneContent">
-                    <span class="drop-icon">📥</span>
-                    <p>Drop courses here to add them</p>
+            <!-- Right Panel: Build Area -->
+            <div class="builder-panel build-panel">
+                <div class="panel-header">
+                    <h3>🆕 Your New Schedule</h3>
                 </div>
-                <div class="new-schedule-grid-container" id="newScheduleGridContainer" style="display: none;">
-                    <div class="schedule-grid" id="newScheduleGrid"></div>
+                <div class="builder-drop-zone" id="builderDropZone">
+                    <div class="drop-zone-content" id="dropZoneContent">
+                        <span class="drop-icon">📥</span>
+                        <p>Drag courses here to add them</p>
+                        <p class="drop-hint">Courses that conflict with your schedule will be grayed out</p>
+                    </div>
+                    <div class="new-schedule-grid-container" id="newScheduleGridContainer" style="display: none;">
+                        <div class="schedule-grid" id="newScheduleGrid"></div>
+                    </div>
                 </div>
-            </div>
-            <div class="builder-legend" id="builderLegend"></div>
-            <div class="builder-actions" id="builderActions" style="display: none;">
-                <button class="clear-builder-btn" onclick="clearNewSchedule()">🗑️ Clear All</button>
-                <button class="save-builder-btn" onclick="saveNewSchedule()">💾 Save as New Schedule</button>
-                <button class="use-builder-btn" onclick="useNewSchedule()">✅ Use This Schedule</button>
+                <div class="builder-legend" id="builderLegend"></div>
+                <div class="builder-actions" id="builderActions" style="display: none;">
+                    <div class="save-row">
+                        <input type="text" id="newScheduleName" placeholder="Enter schedule name..."
+                            class="schedule-name-input">
+                        <button class="save-builder-btn" onclick="saveNewSchedule()">💾 Save</button>
+                    </div>
+                    <div class="action-row">
+                        <button class="clear-builder-btn" onclick="clearNewSchedule()">🗑️ Clear All</button>
+                        <button class="use-builder-btn" onclick="useNewSchedule()">✅ Use This Schedule</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -61,4 +98,5 @@
     </div>
     <script src="builder.js"></script>
 </body>
+
 </html>

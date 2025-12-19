@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,16 +8,39 @@
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
+
 <body>
-    <div class="container">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-logo">📅</span>
+        </div>
+        <div class="sidebar-nav">
+            <a href="index.html" class="nav-item active" title="Home">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-text">Home</span>
+            </a>
+            <a href="compare.html" class="nav-item" title="Compare Schedules">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Compare</span>
+            </a>
+            <a href="builder.html" class="nav-item" title="Build New Schedule">
+                <span class="nav-icon">🔧</span>
+                <span class="nav-text">Build</span>
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <button class="nav-item restart-nav" onclick="restartApp()" title="Restart">
+                <span class="nav-icon">🔄</span>
+                <span class="nav-text">Restart</span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="container with-sidebar">
         <header>
             <h1>📅 Schedule Visualizer</h1>
             <p>Upload a screenshot of your class schedule to visualize it</p>
-            <div class="header-buttons">
-                <a href="compare.html" class="compare-link-btn">📊 Compare Schedules</a>
-                <a href="builder.html" class="builder-link-btn">🆕 Build New Schedule</a>
-                <button class="restart-btn" onclick="restartApp()">🔄 Restart</button>
-            </div>
         </header>
 
         <div class="upload-section">
@@ -25,7 +49,8 @@
                 <div class="upload-content">
                     <span class="upload-icon">📷</span>
                     <p>Drag & drop your schedule screenshot here</p>
-                    <p>or <button class="browse-btn" onclick="document.getElementById('imageInput').click()">Browse Files</button></p>
+                    <p>or <button class="browse-btn" onclick="document.getElementById('imageInput').click()">Browse
+                            Files</button></p>
                 </div>
             </div>
             <div class="preview-container" id="previewContainer" style="display: none;">
@@ -134,6 +159,22 @@ IT332  Capstone  T  05:00 PM - 07:00 PM  FIELD LEC"></textarea>
         </footer>
     </div>
 
+    <!-- Custom Confirmation Modal -->
+    <div class="modal-overlay" id="confirmModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-icon" id="modalIcon">⚠️</span>
+                <h3 id="modalTitle">Confirm</h3>
+            </div>
+            <p id="modalMessage">Are you sure?</p>
+            <div class="modal-actions">
+                <button class="modal-btn cancel-btn" id="modalCancelBtn">Cancel</button>
+                <button class="modal-btn confirm-btn" id="modalConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
+
 </html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,12 +8,39 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="compare.css">
 </head>
+
 <body>
-    <div class="container">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-logo">📅</span>
+        </div>
+        <div class="sidebar-nav">
+            <a href="index.html" class="nav-item" title="Home">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-text">Home</span>
+            </a>
+            <a href="compare.html" class="nav-item active" title="Compare Schedules">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Compare</span>
+            </a>
+            <a href="builder.html" class="nav-item" title="Build New Schedule">
+                <span class="nav-icon">🔧</span>
+                <span class="nav-text">Build</span>
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <button class="nav-item restart-nav" onclick="location.reload()" title="Restart">
+                <span class="nav-icon">🔄</span>
+                <span class="nav-text">Restart</span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="container with-sidebar">
         <header>
-            <h1>🔄 Compare Schedules</h1>
+            <h1>📊 Compare Schedules</h1>
             <p>Select two schedules to compare them side by side</p>
-            <a href="index.html" class="back-btn">← Back to Main</a>
         </header>
 
         <div class="compare-selectors">
@@ -55,29 +83,6 @@
             </div>
         </div>
 
-        <div class="new-schedule-builder" id="newScheduleBuilder">
-            <h2>🆕 Build New Schedule</h2>
-            <p class="builder-hint">Drag courses from the schedules above to build a new one. Dragging a course will include all sessions with that course code.</p>
-            
-            <div class="builder-drop-zone" id="builderDropZone">
-                <div class="drop-zone-content" id="dropZoneContent">
-                    <span class="drop-icon">📥</span>
-                    <p>Drop courses here to add them</p>
-                </div>
-                <div class="new-schedule-grid-container" id="newScheduleGridContainer" style="display: none;">
-                    <div class="schedule-grid" id="newScheduleGrid"></div>
-                </div>
-            </div>
-            
-            <div class="builder-legend" id="builderLegend"></div>
-            
-            <div class="builder-actions" id="builderActions" style="display: none;">
-                <button class="clear-builder-btn" onclick="clearNewSchedule()">🗑️ Clear All</button>
-                <button class="save-builder-btn" onclick="saveNewSchedule()">💾 Save as New Schedule</button>
-                <button class="use-builder-btn" onclick="useNewSchedule()">✅ Use This Schedule</button>
-            </div>
-        </div>
-
         <footer>
             <p>📅 Schedule Visualizer - Christian Andrey Reyes</p>
         </footer>
@@ -85,4 +90,5 @@
 
     <script src="compare.js"></script>
 </body>
+
 </html>

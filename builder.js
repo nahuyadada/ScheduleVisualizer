@@ -57,9 +57,9 @@ function loadSchedulePreview() {
 }
 
 function clearPanel() {
-    document.getElementById('savedScheduleGrid').innerHTML = '<div class="empty-panel">Select a saved schedule to preview</div>';
+    document.getElementById('savedScheduleGrid').innerHTML = '<div class="empty-panel">Select a schedule to preview</div>';
     document.getElementById('savedScheduleLegend').innerHTML = '';
-    document.getElementById('savedScheduleTitle').textContent = 'Select a saved schedule';
+    document.getElementById('savedScheduleTitle').textContent = 'Select a schedule to start';
     document.getElementById('savedScheduleStats').innerHTML = '';
 }
 
@@ -441,11 +441,16 @@ function saveNewSchedule() {
         alert('Add some courses first!');
         return;
     }
-    const name = prompt('Enter a name for this schedule:');
-    if (!name || !name.trim()) return;
+    const nameInput = document.getElementById('newScheduleName');
+    const name = nameInput.value.trim();
+    if (!name) {
+        alert('Please enter a name for your schedule!');
+        nameInput.focus();
+        return;
+    }
     const scheduleToSave = {
         id: Date.now().toString(),
-        name: name.trim(),
+        name: name,
         courses: newScheduleCourses,
         createdAt: new Date().toISOString(),
         courseCount: newScheduleCourses.length,
