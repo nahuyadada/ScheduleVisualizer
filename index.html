@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Visualizer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📅 Schedule Visualizer</h1>
+            <p>Upload a screenshot of your class schedule to visualize it</p>
+            <button class="restart-btn" onclick="restartApp()">🔄 Restart</button>
+        </header>
+
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <input type="file" id="imageInput" accept="image/*" hidden>
+                <div class="upload-content">
+                    <span class="upload-icon">📷</span>
+                    <p>Drag & drop your schedule screenshot here</p>
+                    <p>or <button class="browse-btn" onclick="document.getElementById('imageInput').click()">Browse Files</button></p>
+                </div>
+            </div>
+            <div class="preview-container" id="previewContainer" style="display: none;">
+                <img id="previewImage" alt="Preview">
+                <button class="remove-btn" onclick="removeImage()">✕</button>
+            </div>
+            <div class="actions">
+                <button class="process-btn" id="processBtn" onclick="processImage()" disabled>
+                    <span id="processBtnText">Extract Schedule</span>
+                </button>
+            </div>
+            <div class="progress-container" id="progressContainer" style="display: none;">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <p id="progressText">Processing...</p>
+            </div>
+        </div>
+
+        <div class="manual-entry-section">
+            <h3>Or Enter Manually</h3>
+            <div class="manual-form">
+                <input type="text" id="courseCode" placeholder="Course Code (e.g., CSIT440)">
+                <input type="text" id="courseSection" placeholder="Section (e.g., G1)">
+                <input type="text" id="courseTitle" placeholder="Course Title">
+                <select id="courseDay" multiple>
+                    <option value="M">Monday</option>
+                    <option value="T">Tuesday</option>
+                    <option value="W">Wednesday</option>
+                    <option value="TH">Thursday</option>
+                    <option value="F">Friday</option>
+                    <option value="S">Saturday</option>
+                    <option value="SU">Sunday</option>
+                </select>
+                <input type="time" id="startTime" placeholder="Start Time">
+                <input type="time" id="endTime" placeholder="End Time">
+                <input type="text" id="room" placeholder="Room">
+                <button class="add-btn" onclick="addManualCourse()">Add Course</button>
+            </div>
+        </div>
+
+        <div class="paste-section">
+            <h3>📋 Or Paste Schedule Text</h3>
+            <p class="paste-hint">Copy the schedule table from your portal and paste it here</p>
+            <textarea id="pasteArea" placeholder="Paste your schedule data here...
+Example:
+CSIT440  Industry Trends  T W  08:00 AM - 10:00 AM  ONLINE LEC
+IT332  Capstone  T  05:00 PM - 07:00 PM  FIELD LEC"></textarea>
+            <div class="paste-actions">
+                <button class="parse-btn" onclick="parseTextInput()">Parse Schedule</button>
+            </div>
+        </div>
+
+        <div class="extracted-data-section" id="extractedDataSection" style="display: none;">
+            <h2>📋 Extracted Courses</h2>
+            <div class="courses-table-container">
+                <table class="courses-table" id="coursesTable">
+                    <thead>
+                        <tr>
+                            <th>Course Code</th>
+                            <th>Section</th>
+                            <th>Course Title</th>
+                            <th>Day(s)</th>
+                            <th>Time</th>
+                            <th>Room</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="coursesTableBody">
+                    </tbody>
+                </table>
+            </div>
+            <div class="schedule-save-row">
+                <input type="text" id="scheduleName" placeholder="Schedule name (e.g., 2nd Sem 2025)">
+                <button class="save-schedule-btn" onclick="saveScheduleWithName()">💾 Save Schedule</button>
+            </div>
+            <button class="visualize-btn" onclick="visualizeSchedule()">📊 Visualize Schedule</button>
+        </div>
+
+        <div class="saved-schedules-section" id="savedSchedulesSection" style="display: none;">
+            <h2>📂 Saved Schedules</h2>
+            <div class="saved-schedules-list" id="savedSchedulesList">
+                <!-- Saved schedules will be listed here -->
+            </div>
+        </div>
+
+        <div class="schedule-section" id="scheduleSection" style="display: none;">
+            <h2>📊 Weekly Schedule</h2>
+            <div class="current-schedule-name" id="currentScheduleName"></div>
+            <div class="schedule-actions">
+                <button class="clear-btn" onclick="clearAllCourses()">🗑️ Clear All</button>
+            </div>
+            <div class="schedule-container">
+                <div class="schedule-grid" id="scheduleGrid">
+                    <!-- Grid will be generated by JavaScript -->
+                </div>
+            </div>
+            <div class="legend" id="legend">
+                <!-- Legend will be generated by JavaScript -->
+            </div>
+        </div>
+
+        <footer>
+            <p>📅 Schedule Visualizer - Christian Andrey Reyes</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
