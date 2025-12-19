@@ -235,152 +235,147 @@ async function processImage() {
 function parseScheduleText(text) {
     const extractedCourses = [];
 
-    console.log('Raw OCR Text:', text); // Debug
+    console.log('Raw OCR Text:', text);
 
     // Clean up the text
     const cleanText = text.replace(/\r/g, '').replace(/\n+/g, '\n');
     const lines = cleanText.split('\n').filter(line => line.trim());
 
-    // Course code pattern - matches CSIT440, IT332, CS101, etc.
-    const courseCodePattern = /\b([A-Z]{2,4}\s?\d{3,4}[A-Z]?)\b/g;
+    // Skip header lines
+    const dataLines = lines.filter(line => {
+        const lower = line.toLowerCase();
+        return !lower.includes('course code') &&
+            !lower.includes('course title') &&
+            !lower.includes('schedule') &&
+            line.trim().length > 2;
+    });
 
-    // Time patterns - various formats
-    const timePatterns = [
-        /(\d{1,2}:\d{2}\s*(?:AM|PM))\s*[-–—to]+\s*(\d{1,2}:\d{2}\s*(?:AM|PM))/gi,
-        /(\d{1,2}:\d{2})\s*(?:AM|PM)?\s*[-–—to]+\s*(\d{1,2}:\d{2})\s*(?:AM|PM)?/gi,
-        /(\d{1,2}:\d{2}\s*[AP]M)\s*(\d{1,2}:\d{2}\s*[AP]M)/gi
-    ];
+    console.log('Data lines:', dataLines);
 
-    // Day patterns
-    const dayPatternSingle = /\b(TH|SU|M|T|W|F|S)\b/g;
-    const dayPatternFull = /\b(MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY|MON|TUE|WED|THU|FRI|SAT|SUN)\b/gi;
+    // Course code pattern
+    const codeRegex = /\b(CSIT|IT|CS|MATH|ENG|SCI|PHIL|PE|GE|FIL|NSTP)\s?(\d{3,4}[A-Z]?)\b/gi;
 
-    // Room patterns
-    const roomPattern = /\b(ONLINE|NGE\d*|CASEROOM|FIELD|LAB|LEC|ROOM\s*\d+|[A-Z]+\d{2,})\s*(LEC|LAB|LECTURE|LABORATORY)?\b/gi;
+    // Time pattern - matches "08:00 AM - 10:00 AM" format
+    const timeRangeRegex = /(\d{1,2}:\d{2}\s*(?:AM|PM))\s*[-–—]\s*(\d{1,2}:\d{2}\s*(?:AM|PM))/gi;
 
-    // Strategy 1: Try to find course rows with all information
-    const fullText = lines.join(' ');
+    // Section pattern
+    const sectionRegex = /\b(G\d+)\b/i;
 
-    // Find all course codes first
-    const courseCodes = [];
-    let match;
-    const codeRegex = /\b(CSIT|IT|CS|MATH|ENG|SCI|PHIL|PE)\s?(\d{3,4}[A-Z]?)\b/gi;
+    // Room pattern
+    const roomRegex = /\b(ONLINE|NGE\d*|CASEROOM|FIELD)\s*(LEC|LAB)?/gi;
 
-    while ((match = codeRegex.exec(fullText)) !== null) {
-        const code = (match[1] + match[2]).replace(/\s/g, '');
-        if (!courseCodes.includes(code)) {
-            courseCodes.push(code);
-        }
-    }
+    // Day pattern
+    const dayLetterRegex = /\b([MTWFS]|TH)\b/g;
 
-    console.log('Found course codes:', courseCodes);
+    // Process each line looking for course data
+    for (let i = 0; i < dataLines.length; i++) {
+        const line = dataLines[i];
 
-    // For each line, try to extract course information
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const nextLines = lines.slice(i, i + 3).join(' '); // Look at current and next 2 lines
-
-        // Check if line contains a course code
-        const codeMatch = line.match(/\b([A-Z]{2,4}\s?\d{3,4}[A-Z]?)\b/);
+        // Look for course codes
+        codeRegex.lastIndex = 0;
+        const codeMatch = codeRegex.exec(line);
         if (!codeMatch) continue;
 
-        const courseCode = codeMatch[1].replace(/\s/g, '');
+        const courseCode = (codeMatch[1] + codeMatch[2]).replace(/\s/g, '').toUpperCase();
 
-        // Extract times from this line or nearby lines
-        let startTime = '', endTime = '';
-        for (const pattern of timePatterns) {
-            pattern.lastIndex = 0;
-            const timeMatch = pattern.exec(nextLines);
-            if (timeMatch) {
-                startTime = normalizeTime(timeMatch[1]);
-                endTime = normalizeTime(timeMatch[2]);
-                break;
-            }
-        }
+        // Look in current and nearby lines
+        const searchText = dataLines.slice(i, Math.min(i + 5, dataLines.length)).join(' ');
 
-        // Extract days
+        // Find section
+        let section = '';
+        const secMatch = searchText.match(sectionRegex);
+        if (secMatch) section = secMatch[1].toUpperCase();
+
+        // Find all time ranges
+        timeRangeRegex.lastIndex = 0;
+        const timeMatches = [...searchText.matchAll(/(\d{1,2}:\d{2}\s*(?:AM|PM))\s*[-–—]\s*(\d{1,2}:\d{2}\s*(?:AM|PM))/gi)];
+
+        // Find days
         const days = [];
-
-        // Check for single letter days (be careful with T and TH)
-        const dayText = nextLines.toUpperCase();
-
-        // First check for TH (Thursday) to avoid confusion with T
-        if (dayText.includes('TH') || dayText.includes('THURSDAY') || dayText.includes('THU')) {
-            days.push('TH');
-        }
-        if (/\bT\b/.test(dayText) || dayText.includes('TUESDAY') || dayText.includes('TUE')) {
-            if (!days.includes('T')) days.push('T');
-        }
-        if (/\bM\b/.test(dayText) || dayText.includes('MONDAY') || dayText.includes('MON')) {
-            days.push('M');
-        }
-        if (/\bW\b/.test(dayText) || dayText.includes('WEDNESDAY') || dayText.includes('WED')) {
-            days.push('W');
-        }
-        if (/\bF\b/.test(dayText) || dayText.includes('FRIDAY') || dayText.includes('FRI')) {
-            days.push('F');
-        }
-        if (/\bS\b/.test(dayText) || dayText.includes('SATURDAY') || dayText.includes('SAT')) {
-            if (!days.includes('S')) days.push('S');
-        }
-        if (/\bSU\b/.test(dayText) || dayText.includes('SUNDAY') || dayText.includes('SUN')) {
-            days.push('SU');
+        const dayMatches = searchText.matchAll(/\b([MTWFS]|TH)\b/g);
+        for (const dm of dayMatches) {
+            const day = dm[1].toUpperCase();
+            if (!days.includes(day)) days.push(day);
         }
 
-        // Extract room
+        // Find room
         let room = '';
-        const roomMatch = nextLines.match(roomPattern);
-        if (roomMatch) {
-            room = roomMatch.join(' ').trim();
-        }
+        const roomMatch = searchText.match(/\b(ONLINE|NGE\d*|CASEROOM|FIELD)\s*(LEC|LAB)?/gi);
+        if (roomMatch) room = roomMatch[0].trim();
 
-        // Extract title (text between code and other data)
+        // Extract title
         let title = '';
-        const afterCode = line.substring(line.indexOf(courseCode) + courseCode.length).trim();
-        const titleMatch = afterCode.match(/^([A-Za-z\s&]+)/);
-        if (titleMatch) {
-            title = titleMatch[1].trim();
-            // Clean up title
-            if (title.length > 50) title = title.substring(0, 50);
+        const afterCode = line.substring(line.indexOf(codeMatch[0]) + codeMatch[0].length);
+        const titleWords = afterCode.match(/^\s*([A-Za-z\s&,]+)/);
+        if (titleWords) {
+            title = titleWords[1].trim().substring(0, 50);
         }
 
-        // Only add if we have meaningful data
-        if (courseCode && (days.length > 0 || startTime)) {
-            const course = {
-                id: Date.now() + Math.random(),
-                code: courseCode,
-                title: title,
-                days: [...new Set(days)],
-                startTime: startTime,
-                endTime: endTime,
-                room: room
-            };
+        // Create course entries
+        if (timeMatches.length > 0) {
+            for (let t = 0; t < timeMatches.length; t++) {
+                const startTime = normalizeTime(timeMatches[t][1]);
+                const endTime = normalizeTime(timeMatches[t][2]);
+                const courseDays = days.length > t ? [days[t]] : (days.length > 0 ? [days[0]] : []);
 
-            // Check if we already have this course
-            const exists = extractedCourses.some(c => c.code === courseCode);
-            if (!exists) {
-                extractedCourses.push(course);
-                console.log('Extracted course:', course);
+                const isDupe = extractedCourses.some(c =>
+                    c.code === courseCode && c.startTime === startTime && JSON.stringify(c.days) === JSON.stringify(courseDays)
+                );
+
+                if (!isDupe && (courseDays.length > 0 || startTime)) {
+                    extractedCourses.push({
+                        id: Date.now() + Math.random(),
+                        code: courseCode,
+                        section: section,
+                        title: title,
+                        days: courseDays,
+                        startTime: startTime,
+                        endTime: endTime,
+                        room: room
+                    });
+                }
+            }
+        } else if (days.length > 0) {
+            const isDupe = extractedCourses.some(c => c.code === courseCode);
+            if (!isDupe) {
+                extractedCourses.push({
+                    id: Date.now() + Math.random(),
+                    code: courseCode,
+                    section: section,
+                    title: title,
+                    days: days,
+                    startTime: '',
+                    endTime: '',
+                    room: room
+                });
             }
         }
     }
 
-    // If no courses found, try alternative parsing
+    // Fallback: extract just course codes
     if (extractedCourses.length === 0) {
-        console.log('Trying alternative parsing...');
+        console.log('Fallback: extracting just course codes...');
+        const fullText = lines.join(' ');
+        const allCodes = [...fullText.matchAll(/\b(CSIT|IT|CS|MATH|ENG|SCI|PHIL|PE|GE|FIL|NSTP)\s?(\d{3,4}[A-Z]?)\b/gi)];
+        const seenCodes = new Set();
 
-        // Look for any course codes and create entries
-        courseCodes.forEach(code => {
-            extractedCourses.push({
-                id: Date.now() + Math.random(),
-                code: code,
-                title: '',
-                days: [],
-                startTime: '',
-                endTime: '',
-                room: ''
-            });
-        });
+        for (const match of allCodes) {
+            const code = (match[1] + match[2]).replace(/\s/g, '').toUpperCase();
+            if (!seenCodes.has(code)) {
+                seenCodes.add(code);
+                extractedCourses.push({
+                    id: Date.now() + Math.random(),
+                    code: code,
+                    section: '',
+                    title: '',
+                    days: [],
+                    startTime: '',
+                    endTime: '',
+                    room: '',
+                    isTBA: true
+                });
+            }
+        }
     }
 
     return extractedCourses;

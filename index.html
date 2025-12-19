@@ -40,38 +40,27 @@
     <div class="container with-sidebar">
         <header>
             <h1>📅 Schedule Visualizer</h1>
-            <p>Upload a screenshot of your class schedule to visualize it</p>
+            <p>Enter your class schedule manually or paste from your school portal</p>
         </header>
 
-        <div class="upload-section">
-            <div class="upload-area" id="uploadArea">
-                <input type="file" id="imageInput" accept="image/*" hidden>
-                <div class="upload-content">
-                    <span class="upload-icon">📷</span>
-                    <p>Drag & drop your schedule screenshot here</p>
-                    <p>or <button class="browse-btn" onclick="document.getElementById('imageInput').click()">Browse
-                            Files</button></p>
-                </div>
+        <div class="paste-section">
+            <h3>📋 Paste Schedule Text</h3>
+            <div class="tutorial-gif">
+                <img src="EXAMPLE.gif" alt="How to copy your schedule">
             </div>
-            <div class="preview-container" id="previewContainer" style="display: none;">
-                <img id="previewImage" alt="Preview">
-                <button class="remove-btn" onclick="removeImage()">✕</button>
-            </div>
-            <div class="actions">
-                <button class="process-btn" id="processBtn" onclick="processImage()" disabled>
-                    <span id="processBtnText">Extract Schedule</span>
-                </button>
-            </div>
-            <div class="progress-container" id="progressContainer" style="display: none;">
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-                <p id="progressText">Processing...</p>
+            <p class="paste-hint">Copy the schedule table from your portal and paste it here</p>
+            <textarea id="pasteArea" placeholder="Paste your schedule data here...
+Example:
+CSIT440  Industry Trends  T W  08:00 AM - 10:00 AM  ONLINE LEC
+IT332  Capstone  T  05:00 PM - 07:00 PM  FIELD LEC"></textarea>
+            <div class="paste-actions">
+                <button class="parse-btn" onclick="parseTextInput(false)">➕ Add to Schedule</button>
+                <button class="parse-new-btn" onclick="parseTextInput(true)">🔄 New Schedule</button>
             </div>
         </div>
 
         <div class="manual-entry-section">
-            <h3>Or Enter Manually</h3>
+            <h3>✏️ Or Enter Manually</h3>
             <div class="manual-form">
                 <input type="text" id="courseCode" placeholder="Course Code (e.g., CSIT440)">
                 <input type="text" id="courseSection" placeholder="Section (e.g., G1)">
@@ -89,19 +78,6 @@
                 <input type="time" id="endTime" placeholder="End Time">
                 <input type="text" id="room" placeholder="Room">
                 <button class="add-btn" onclick="addManualCourse()">Add Course</button>
-            </div>
-        </div>
-
-        <div class="paste-section">
-            <h3>📋 Or Paste Schedule Text</h3>
-            <p class="paste-hint">Copy the schedule table from your portal and paste it here</p>
-            <textarea id="pasteArea" placeholder="Paste your schedule data here...
-Example:
-CSIT440  Industry Trends  T W  08:00 AM - 10:00 AM  ONLINE LEC
-IT332  Capstone  T  05:00 PM - 07:00 PM  FIELD LEC"></textarea>
-            <div class="paste-actions">
-                <button class="parse-btn" onclick="parseTextInput(false)">➕ Add to Schedule</button>
-                <button class="parse-new-btn" onclick="parseTextInput(true)">🔄 New Schedule</button>
             </div>
         </div>
 
