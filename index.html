@@ -108,7 +108,16 @@ IT332  Capstone  T  05:00 PM - 07:00 PM  FIELD LEC"></textarea>
         </div>
 
         <div class="saved-schedules-section" id="savedSchedulesSection" style="display: none;">
-            <h2>📂 Saved Schedules</h2>
+            <div class="saved-schedules-header">
+                <h2>📂 Saved Schedules</h2>
+                <div class="import-export-actions">
+                    <button class="export-btn" onclick="exportSchedules()">📤 Export All</button>
+                    <button class="import-btn" onclick="document.getElementById('importFile').click()">📥
+                        Import</button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;"
+                        onchange="importSchedules(event)">
+                </div>
+            </div>
             <div class="saved-schedules-list" id="savedSchedulesList">
                 <!-- Saved schedules will be listed here -->
             </div>

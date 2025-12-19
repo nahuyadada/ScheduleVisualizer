@@ -843,13 +843,19 @@ function updateSavedSchedulesList() {
     const section = document.getElementById('savedSchedulesSection');
     const list = document.getElementById('savedSchedulesList');
 
-    if (savedSchedules.length === 0) {
-        section.style.display = 'none';
-        return;
-    }
-
+    // Always show section so import button is accessible
     section.style.display = 'block';
     list.innerHTML = '';
+
+    if (savedSchedules.length === 0) {
+        list.innerHTML = `
+            <div class="empty-schedules-message">
+                <p>📭 No saved schedules yet</p>
+                <p class="hint">Save a schedule from above, or import schedules from a friend!</p>
+            </div>
+        `;
+        return;
+    }
 
     savedSchedules.forEach((schedule) => {
         const card = document.createElement('div');
@@ -937,6 +943,110 @@ async function deleteSavedSchedule(id) {
     saveSavedSchedules();
     updateSavedSchedulesList();
     showToast('Schedule deleted', 'success');
+}
+
+// Export all schedules to JSON file
+function exportSchedules() {
+    if (savedSchedules.length === 0) {
+        showToast('No schedules to export', 'error');
+        return;
+    }
+
+    const exportData = {
+        exportedAt: new Date().toISOString(),
+        version: '1.0',
+        schedules: savedSchedules
+    };
+
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `schedules_export_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast(`Exported ${savedSchedules.length} schedule(s)!`, 'success');
+}
+
+// Import schedules from JSON file
+async function importSchedules(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+
+        // Validate the import data
+        if (!data.schedules || !Array.isArray(data.schedules)) {
+            showToast('Invalid file format', 'error');
+            return;
+        }
+
+        // Check if any schedules already exist with same names
+        const existingNames = savedSchedules.map(s => s.name);
+        const newSchedules = data.schedules.filter(s => s.name && s.courses);
+
+        if (newSchedules.length === 0) {
+            showToast('No valid schedules found in file', 'error');
+            return;
+        }
+
+        // Ask user how to handle import
+        const hasConflicts = newSchedules.some(s => existingNames.includes(s.name));
+
+        let confirmed = true;
+        if (savedSchedules.length > 0) {
+            confirmed = await showConfirmModal(
+                `Import ${newSchedules.length} schedule(s)? ${hasConflicts ? 'Some schedule names already exist and will be renamed.' : ''}`,
+                'Import Schedules',
+                '📥',
+                'Import',
+                true
+            );
+        }
+
+        if (!confirmed) {
+            event.target.value = '';
+            return;
+        }
+
+        // Import schedules with new IDs to avoid conflicts
+        let importCount = 0;
+        newSchedules.forEach(schedule => {
+            // Generate new ID
+            const newSchedule = {
+                ...schedule,
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                importedAt: new Date().toISOString()
+            };
+
+            // Rename if name exists
+            if (existingNames.includes(newSchedule.name)) {
+                newSchedule.name = `${newSchedule.name} (imported)`;
+            }
+
+            savedSchedules.push(newSchedule);
+            existingNames.push(newSchedule.name);
+            importCount++;
+        });
+
+        saveSavedSchedules();
+        updateSavedSchedulesList();
+        showToast(`Imported ${importCount} schedule(s)!`, 'success');
+
+    } catch (error) {
+        console.error('Import error:', error);
+        showToast('Error reading file. Make sure it\'s a valid JSON export.', 'error');
+    }
+
+    // Reset file input
+    event.target.value = '';
 }
 
 // Toast notifications

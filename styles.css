@@ -573,16 +573,71 @@ header {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.saved-schedules-section h2 {
+.saved-schedules-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
     margin-bottom: 20px;
+}
+
+.saved-schedules-header h2 {
+    margin: 0;
     color: #00d9ff;
-    text-align: center;
+}
+
+.import-export-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.export-btn,
+.import-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px 20px;
+    border-radius: 25px;
+    color: #fff;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.export-btn:hover {
+    background: linear-gradient(90deg, #00d9ff, #00ff88);
+    color: #1a1a2e;
+    border-color: transparent;
+}
+
+.import-btn:hover {
+    background: linear-gradient(90deg, #f39c12, #e67e22);
+    color: #fff;
+    border-color: transparent;
 }
 
 .saved-schedules-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 15px;
+}
+
+.empty-schedules-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+}
+
+.empty-schedules-message p:first-child {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.empty-schedules-message .hint {
+    font-size: 0.9rem;
+    color: #666;
 }
 
 .saved-schedule-card {
