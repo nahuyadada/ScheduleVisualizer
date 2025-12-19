@@ -314,6 +314,21 @@ header {
     transform: scale(1.05);
 }
 
+.parse-new-btn {
+    background: linear-gradient(90deg, #e74c3c, #c0392b);
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.parse-new-btn:hover {
+    transform: scale(1.05);
+}
+
 /* Extracted Data Section */
 .extracted-data-section {
     background: rgba(255, 255, 255, 0.05);

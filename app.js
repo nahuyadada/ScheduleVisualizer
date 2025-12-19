@@ -935,13 +935,29 @@ function exportSchedule() {
 }
 
 // Parse text input from textarea
-function parseTextInput() {
+function parseTextInput(isNewSchedule = false) {
     const textarea = document.getElementById('pasteArea');
     const text = textarea.value.trim();
     
     if (!text) {
         showToast('Please paste your schedule data first', 'error');
         return;
+    }
+    
+    // If new schedule, clear existing courses first
+    if (isNewSchedule) {
+        courses = [];
+        // Also clear the schedule name
+        const scheduleNameInput = document.getElementById('scheduleName');
+        if (scheduleNameInput) {
+            scheduleNameInput.value = '';
+        }
+        const currentScheduleLabel = document.getElementById('currentScheduleName');
+        if (currentScheduleLabel) {
+            currentScheduleLabel.dataset.loadedName = '';
+        }
+        // Hide schedule section if visible
+        document.getElementById('scheduleSection').style.display = 'none';
     }
     
     const extractedCourses = parseScheduleFromText(text);
@@ -951,7 +967,8 @@ function parseTextInput() {
         saveToStorage();
         updateCoursesTable();
         textarea.value = '';
-        showToast(`Added ${extractedCourses.length} course(s)!`, 'success');
+        const actionText = isNewSchedule ? 'Loaded' : 'Added';
+        showToast(`${actionText} ${extractedCourses.length} course(s)!`, 'success');
     } else {
         showToast('Could not parse courses. Check format.', 'error');
     }
