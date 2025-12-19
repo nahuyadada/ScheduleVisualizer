@@ -37,9 +37,6 @@ header p {
 }
 
 .restart-btn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
     background: linear-gradient(90deg, #e74c3c, #c0392b);
     border: none;
     padding: 10px 20px;
@@ -53,6 +50,48 @@ header p {
 .restart-btn:hover {
     transform: scale(1.05);
     box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
+}
+
+.header-buttons {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.compare-link-btn {
+    background: linear-gradient(90deg, #9b59b6, #8e44ad);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.compare-link-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 20px rgba(155, 89, 182, 0.4);
+}
+
+.builder-link-btn {
+    background: linear-gradient(90deg, #2ecc71, #27ae60);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.builder-link-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 20px rgba(46, 204, 113, 0.4);
 }
 
 header {
@@ -556,9 +595,15 @@ header {
 }
 
 .schedule-section h2 {
-    margin-bottom: 10px;
+    margin-bottom: 0;
     color: #00d9ff;
-    text-align: center;
+}
+
+.schedule-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
 .current-schedule-name {

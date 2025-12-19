@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build New Schedule - Schedule Visualizer</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="builder.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🆕 Build New Schedule</h1>
+            <p>Load a saved schedule, then drag subjects to build a new one.</p>
+            <a href="index.html" class="back-btn">← Back to Main</a>
+        </header>
+
+        <div class="builder-selectors">
+            <div class="selector-box">
+                <h3>Saved Schedule</h3>
+                <select id="savedScheduleSelect">
+                    <option value="">-- Select a saved schedule --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="builder-schedule-panel" id="savedSchedulePanel">
+            <div class="panel-header">
+                <h3 id="savedScheduleTitle">Select a saved schedule</h3>
+                <div class="panel-stats" id="savedScheduleStats"></div>
+            </div>
+            <div class="panel-grid-container">
+                <div class="schedule-grid" id="savedScheduleGrid"></div>
+            </div>
+            <div class="panel-legend" id="savedScheduleLegend"></div>
+        </div>
+
+        <div class="new-schedule-builder" id="newScheduleBuilder">
+            <h2>🆕 Build Area</h2>
+            <p class="builder-hint">Drag courses from the schedule above to build a new one. Dragging a course will include all sessions with that course code and section.</p>
+            <div class="builder-drop-zone" id="builderDropZone">
+                <div class="drop-zone-content" id="dropZoneContent">
+                    <span class="drop-icon">📥</span>
+                    <p>Drop courses here to add them</p>
+                </div>
+                <div class="new-schedule-grid-container" id="newScheduleGridContainer" style="display: none;">
+                    <div class="schedule-grid" id="newScheduleGrid"></div>
+                </div>
+            </div>
+            <div class="builder-legend" id="builderLegend"></div>
+            <div class="builder-actions" id="builderActions" style="display: none;">
+                <button class="clear-builder-btn" onclick="clearNewSchedule()">🗑️ Clear All</button>
+                <button class="save-builder-btn" onclick="saveNewSchedule()">💾 Save as New Schedule</button>
+                <button class="use-builder-btn" onclick="useNewSchedule()">✅ Use This Schedule</button>
+            </div>
+        </div>
+
+        <footer>
+            <p>📅 Schedule Visualizer - Christian Andrey Reyes</p>
+        </footer>
+    </div>
+    <script src="builder.js"></script>
+</body>
+</html>

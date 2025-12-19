@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Schedules - Schedule Visualizer</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="compare.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔄 Compare Schedules</h1>
+            <p>Select two schedules to compare them side by side</p>
+            <a href="index.html" class="back-btn">← Back to Main</a>
+        </header>
+
+        <div class="compare-selectors">
+            <div class="selector-box">
+                <h3>Schedule 1</h3>
+                <select id="schedule1Select" onchange="loadSchedulePreview(1)">
+                    <option value="">-- Select a schedule --</option>
+                </select>
+            </div>
+            <div class="vs-badge">VS</div>
+            <div class="selector-box">
+                <h3>Schedule 2</h3>
+                <select id="schedule2Select" onchange="loadSchedulePreview(2)">
+                    <option value="">-- Select a schedule --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="compare-container">
+            <div class="schedule-panel" id="panel1">
+                <div class="panel-header">
+                    <h3 id="panel1Title">Select a schedule</h3>
+                    <div class="panel-stats" id="panel1Stats"></div>
+                </div>
+                <div class="panel-grid-container">
+                    <div class="schedule-grid" id="grid1"></div>
+                </div>
+                <div class="panel-legend" id="legend1"></div>
+            </div>
+
+            <div class="schedule-panel" id="panel2">
+                <div class="panel-header">
+                    <h3 id="panel2Title">Select a schedule</h3>
+                    <div class="panel-stats" id="panel2Stats"></div>
+                </div>
+                <div class="panel-grid-container">
+                    <div class="schedule-grid" id="grid2"></div>
+                </div>
+                <div class="panel-legend" id="legend2"></div>
+            </div>
+        </div>
+
+        <div class="new-schedule-builder" id="newScheduleBuilder">
+            <h2>🆕 Build New Schedule</h2>
+            <p class="builder-hint">Drag courses from the schedules above to build a new one. Dragging a course will include all sessions with that course code.</p>
+            
+            <div class="builder-drop-zone" id="builderDropZone">
+                <div class="drop-zone-content" id="dropZoneContent">
+                    <span class="drop-icon">📥</span>
+                    <p>Drop courses here to add them</p>
+                </div>
+                <div class="new-schedule-grid-container" id="newScheduleGridContainer" style="display: none;">
+                    <div class="schedule-grid" id="newScheduleGrid"></div>
+                </div>
+            </div>
+            
+            <div class="builder-legend" id="builderLegend"></div>
+            
+            <div class="builder-actions" id="builderActions" style="display: none;">
+                <button class="clear-builder-btn" onclick="clearNewSchedule()">🗑️ Clear All</button>
+                <button class="save-builder-btn" onclick="saveNewSchedule()">💾 Save as New Schedule</button>
+                <button class="use-builder-btn" onclick="useNewSchedule()">✅ Use This Schedule</button>
+            </div>
+        </div>
+
+        <footer>
+            <p>📅 Schedule Visualizer - Christian Andrey Reyes</p>
+        </footer>
+    </div>
+
+    <script src="compare.js"></script>
+</body>
+</html>
