@@ -1001,17 +1001,27 @@ header {
     transform: scale(1.05);
 }
 
-/* Footer */
+/* Footer - Sticky to bottom of content */
 footer {
     text-align: center;
-    padding: 20px;
-    margin-top: 30px;
+    padding: 15px 20px;
+    margin-top: auto;
     color: #666;
+    background: rgba(22, 33, 62, 0.95);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 footer p {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+/* Flexbox layout to push footer to bottom */
+.container.with-sidebar {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 0;
 }
 
 /* Custom Modal */
