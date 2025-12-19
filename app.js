@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Drag and Drop functionality
 function setupDragAndDrop() {
     const uploadArea = document.getElementById('uploadArea');
-
+    if (!uploadArea) return; // Element was removed
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         uploadArea.addEventListener(eventName, preventDefaults, false);
     });
@@ -126,7 +126,10 @@ function setupDragAndDrop() {
 }
 
 function setupFileInput() {
-    document.getElementById('imageInput').addEventListener('change', handleFileSelect);
+    const imageInput = document.getElementById('imageInput');
+    if (imageInput) {
+        imageInput.addEventListener('change', handleFileSelect);
+    }
 }
 
 function handleDrop(e) {
