@@ -7,6 +7,7 @@
     <title>Schedule Visualizer</title>
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 </head>
 
 <body>
@@ -126,7 +127,10 @@ IT332  Capstone  T  05:00 PM - 07:00 PM  FIELD LEC"></textarea>
         <div class="schedule-section" id="scheduleSection" style="display: none;">
             <div class="schedule-header-row">
                 <h2>📊 Weekly Schedule</h2>
-                <button class="clear-btn" onclick="clearAllCourses()">🗑️ Clear All</button>
+                <div class="schedule-header-actions">
+                    <button class="mobile-wallpaper-btn" onclick="showMobileWallpaper()">📱 Mobile Wallpaper</button>
+                    <button class="clear-btn" onclick="clearAllCourses()">🗑️ Clear All</button>
+                </div>
             </div>
             <div class="current-schedule-name" id="currentScheduleName"></div>
             <div class="schedule-container">
@@ -142,6 +146,23 @@ IT332  Capstone  T  05:00 PM - 07:00 PM  FIELD LEC"></textarea>
         <footer>
             <p>📅 Schedule Visualizer - Christian Andrey Reyes</p>
         </footer>
+    </div>
+
+    <!-- Mobile Wallpaper Modal -->
+    <div class="mobile-wallpaper-overlay" id="mobileWallpaperModal" style="display: none;">
+        <div class="mobile-wallpaper-container">
+            <div class="mobile-wallpaper-header">
+                <h3>📱 Mobile Wallpaper Preview</h3>
+                <p>Screenshot this view for your phone wallpaper</p>
+            </div>
+            <div class="mobile-wallpaper-content" id="mobileWallpaperContent">
+                <!-- Mobile wallpaper will be generated here -->
+            </div>
+            <div class="mobile-wallpaper-actions">
+                <button class="save-wallpaper-btn" onclick="saveMobileWallpaper()">💾 Save as PNG</button>
+                <button class="close-wallpaper-btn" onclick="closeMobileWallpaper()">✕ Close</button>
+            </div>
+        </div>
     </div>
 
     <!-- Custom Confirmation Modal -->

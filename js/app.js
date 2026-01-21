@@ -1158,8 +1158,196 @@ function parseScheduleFromText(text) {
         return parseMultiLineFormat(lines);
     }
 
+    // Check if this is the block format (starts with course code, then G# section)
+    // Pattern: CourseCode, Section (G#), C0, Title, credits, schedule lines, rooms, mode
+    if (isBlockFormat(lines)) {
+        return parseBlockFormat(lines);
+    }
+
     // Otherwise try the simple one-line-per-course format
     return parseSimpleFormat(lines);
+}
+
+// Check if the text follows the block format pattern
+function isBlockFormat(lines) {
+    // Look for pattern: course code followed by G# section
+    for (let i = 0; i < lines.length - 1; i++) {
+        if (lines[i].match(/^[A-Z]{2,4}\d{3,4}[A-Z]?$/) &&
+            lines[i + 1].match(/^G\d+$/)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Parse the block format:
+// CourseCode
+// Section (G5)
+// C0
+// Title
+// Credits (2.0, 1.0, 3)
+// Schedule(s): "TH 08:00 AM - 10:00 AM," or "S 08:00 AM - 11:00 AM"
+// Room(s): "ONLINE," or "NGE207"
+// Mode: "Online" or "In-Person"
+function parseBlockFormat(lines) {
+    const extractedCourses = [];
+    let i = 0;
+
+    while (i < lines.length) {
+        const line = lines[i];
+
+        // Look for course code
+        if (!line.match(/^[A-Z]{2,4}\d{3,4}[A-Z]?$/)) {
+            i++;
+            continue;
+        }
+
+        const courseCode = line;
+        i++;
+
+        // Section (G5, G3, etc.)
+        let section = '';
+        if (i < lines.length && lines[i].match(/^G\d+$/)) {
+            section = lines[i];
+            i++;
+        }
+
+        // Skip C0 or similar
+        if (i < lines.length && lines[i].match(/^C\d+$/)) {
+            i++;
+        }
+
+        // Course title (next non-number line)
+        let title = '';
+        if (i < lines.length && !lines[i].match(/^\d+\.?\d*$/)) {
+            title = lines[i];
+            i++;
+        }
+
+        // Skip credit numbers (2.0, 1.0, 3, etc.)
+        while (i < lines.length && lines[i].match(/^\d+\.?\d*$/)) {
+            i++;
+        }
+
+        // Collect schedule lines (contain day codes and times)
+        // Format: "TH 08:00 AM - 10:00 AM," or "M 03:00 PM - 06:00 PM,"
+        const scheduleLines = [];
+        while (i < lines.length) {
+            const scheduleLine = lines[i];
+            // Check if it contains a time pattern
+            if (scheduleLine.match(/\d{1,2}:\d{2}\s*(AM|PM)/i)) {
+                scheduleLines.push(scheduleLine.replace(/,\s*$/, '')); // Remove trailing comma
+                i++;
+            } else {
+                break;
+            }
+        }
+
+        // Collect room lines
+        const roomLines = [];
+        while (i < lines.length) {
+            const roomLine = lines[i];
+            // Room patterns: ONLINE, NGE###, CASEROOM, FIELD
+            if (roomLine.match(/^(ONLINE|NGE\d*|CASEROOM|FIELD),?$/i)) {
+                roomLines.push(roomLine.replace(/,\s*$/, '')); // Remove trailing comma
+                i++;
+            } else {
+                break;
+            }
+        }
+
+        // Skip mode line (Online, In-Person)
+        if (i < lines.length && (lines[i] === 'Online' || lines[i] === 'In-Person')) {
+            i++;
+        }
+
+        // Parse each schedule line and create course entries
+        for (let s = 0; s < scheduleLines.length; s++) {
+            const scheduleLine = scheduleLines[s];
+            const room = roomLines[s] || roomLines[0] || '';
+
+            // Parse day and time from schedule line
+            // Format: "TH 08:00 AM - 10:00 AM" or "TS 03:00 PM - 04:30 PM"
+            const scheduleMatch = scheduleLine.match(/^([A-Z]+)\s+(\d{1,2}:\d{2}\s*(?:AM|PM))\s*-\s*(\d{1,2}:\d{2}\s*(?:AM|PM))$/i);
+
+            if (scheduleMatch) {
+                const dayStr = scheduleMatch[1].toUpperCase();
+                const startTimeRaw = scheduleMatch[2];
+                const endTimeRaw = scheduleMatch[3];
+
+                const startTime = normalizeTime(startTimeRaw);
+                const endTime = normalizeTime(endTimeRaw);
+
+                // Parse days (could be combined like "TS" for Tuesday+Saturday)
+                const days = parseMultipleDays(dayStr);
+
+                extractedCourses.push({
+                    id: Date.now() + Math.random(),
+                    code: courseCode,
+                    section: section,
+                    title: title,
+                    days: days,
+                    startTime: startTime,
+                    endTime: endTime,
+                    room: room
+                });
+            }
+        }
+
+        // If no schedules found, still add the course as TBA
+        if (scheduleLines.length === 0) {
+            extractedCourses.push({
+                id: Date.now() + Math.random(),
+                code: courseCode,
+                section: section,
+                title: title,
+                days: [],
+                startTime: '',
+                endTime: '',
+                room: '',
+                isTBA: true
+            });
+        }
+    }
+
+    return extractedCourses;
+}
+
+// Parse combined day strings like "TS" (Tuesday + Saturday), "TH" (Thursday)
+function parseMultipleDays(dayStr) {
+    const days = [];
+    let remaining = dayStr.toUpperCase();
+
+    // Handle special cases first
+    if (remaining === 'TH') {
+        return ['TH'];
+    }
+    if (remaining === 'SU') {
+        return ['SU'];
+    }
+
+    // Check for TH (Thursday) first
+    if (remaining.includes('TH')) {
+        days.push('TH');
+        remaining = remaining.replace('TH', '');
+    }
+
+    // Check for SU (Sunday) 
+    if (remaining.includes('SU')) {
+        days.push('SU');
+        remaining = remaining.replace('SU', '');
+    }
+
+    // Handle remaining single-letter days
+    for (const char of remaining) {
+        if (char === 'M') days.push('M');
+        else if (char === 'T') days.push('T');
+        else if (char === 'W') days.push('W');
+        else if (char === 'F') days.push('F');
+        else if (char === 'S') days.push('S');
+    }
+
+    return [...new Set(days)]; // Remove duplicates
 }
 
 // Parse the multi-line format from the school portal
@@ -1455,4 +1643,195 @@ function extractDaysFromText(text) {
     }
 
     return [...new Set(days)];
+}
+
+// Mobile Wallpaper Functions
+function showMobileWallpaper() {
+    if (courses.length === 0) {
+        showToast('No courses to display', 'error');
+        return;
+    }
+
+    const modal = document.getElementById('mobileWallpaperModal');
+    const content = document.getElementById('mobileWallpaperContent');
+
+    // Generate the mobile schedule content
+    content.innerHTML = generateMobileScheduleHTML();
+
+    // Show the modal
+    modal.style.display = 'flex';
+
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMobileWallpaper() {
+    const modal = document.getElementById('mobileWallpaperModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+function generateMobileScheduleHTML() {
+    const days = ['M', 'T', 'W', 'TH', 'F', 'S']; // Mon-Sat only (no Sunday)
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayAbbrev = { 'M': 0, 'T': 1, 'W': 2, 'TH': 3, 'F': 4, 'S': 5 };
+
+    // Time range: 7:00 AM to 7:00 PM (24 half-hour slots)
+    const startHour = 7;
+    const endHour = 19; // 7 PM
+    const numSlots = (endHour - startHour) * 2; // 24 half-hour slots
+
+    // Create a grid to track course placements
+    // grid[dayIndex][slotIndex] = course data or null
+    const grid = [];
+    for (let d = 0; d < 6; d++) { // 6 days
+        grid[d] = new Array(numSlots).fill(null);
+    }
+
+    // Place courses into the grid
+    const coursePlacements = []; // {dayIndex, startSlot, endSlot, course}
+
+    courses.forEach(course => {
+        if (course.isTBA) return;
+
+        const startMinutes = timeToMinutes(course.startTime);
+        const endMinutes = timeToMinutes(course.endTime);
+
+        if (startMinutes === null || endMinutes === null) return;
+
+        // Convert to slot index (relative to 7:00 AM)
+        const startSlot = Math.floor((startMinutes - startHour * 60) / 30);
+        const endSlot = Math.ceil((endMinutes - startHour * 60) / 30);
+
+        if (startSlot < 0 || endSlot > numSlots) return; // Out of range
+
+        course.days.forEach(dayCode => {
+            const dayIndex = dayAbbrev[dayCode];
+            if (dayIndex === undefined) return;
+
+            coursePlacements.push({
+                dayIndex,
+                startSlot,
+                endSlot,
+                course: {
+                    code: course.code,
+                    section: course.section || '',
+                    room: course.room || ''
+                }
+            });
+        });
+    });
+
+    // Build HTML
+    let html = `<div class="mobile-schedule-grid">`;
+    html += `<div class="mobile-grid-container">`;
+
+    // Header row
+    html += `<div class="mobile-grid-header time-header"></div>`; // Empty corner
+    dayNames.forEach(day => {
+        html += `<div class="mobile-grid-header">${day}</div>`;
+    });
+
+    // Time slots and cells
+    for (let slot = 0; slot < numSlots; slot++) {
+        const hour = startHour + Math.floor(slot / 2);
+        const minutes = (slot % 2) * 30;
+        const isHourStart = minutes === 0;
+
+        // Time label
+        const displayHour = hour > 12 ? hour - 12 : hour;
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const minuteStr = minutes.toString().padStart(2, '0');
+
+        html += `
+            <div class="mobile-time-label">
+                <span class="time-main">${displayHour}:${minuteStr}</span>
+                <span class="time-sub">${period}</span>
+            </div>
+        `;
+
+        // Day cells (6 days: Mon-Sat)
+        for (let d = 0; d < 6; d++) {
+            const cellClass = isHourStart ? 'mobile-grid-cell hour-start' : 'mobile-grid-cell';
+            html += `<div class="${cellClass}" data-day="${d}" data-slot="${slot}">`;
+
+            // Check if a course starts at this slot
+            const placement = coursePlacements.find(p => p.dayIndex === d && p.startSlot === slot);
+            if (placement) {
+                const slotSpan = placement.endSlot - placement.startSlot;
+                const height = slotSpan * 30 - 2; // 30px per slot minus border
+
+                // Abbreviate room names for better fit
+                const roomDisplay = abbreviateRoom(placement.course.room);
+
+                html += `
+                    <div class="mobile-course-block" style="height: ${height}px;">
+                        <div class="mobile-course-code">${placement.course.code}</div>
+                        <div class="mobile-course-section">${placement.course.section}</div>
+                        <div class="mobile-course-room">${roomDisplay}</div>
+                    </div>
+                `;
+            }
+
+            html += `</div>`;
+        }
+    }
+
+    html += `</div></div>`;
+
+    return html;
+}
+
+// Abbreviate room names for mobile display
+function abbreviateRoom(room) {
+    if (!room) return '';
+    const upper = room.toUpperCase();
+    if (upper.includes('CASEROOM')) return 'CASE';
+    if (upper.includes('ONLINE')) return 'ONLINE';
+    if (upper.includes('FIELD')) return 'FIELD';
+    // NGE101, NGE207, etc. - keep as is but shorten if needed
+    if (upper.match(/^NGE\d+/)) return room;
+    return room;
+}
+
+// Close mobile wallpaper on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('mobileWallpaperModal');
+        if (modal && modal.style.display === 'flex') {
+            closeMobileWallpaper();
+        }
+    }
+});
+
+// Save mobile wallpaper as PNG
+async function saveMobileWallpaper() {
+    const content = document.getElementById('mobileWallpaperContent');
+
+    if (!content) {
+        showToast('No wallpaper to save', 'error');
+        return;
+    }
+
+    try {
+        showToast('Generating PNG...', 'info');
+
+        const canvas = await html2canvas(content, {
+            backgroundColor: '#000000',
+            scale: 3, // Higher resolution for iPhone
+            useCORS: true,
+            logging: false
+        });
+
+        // Create download link
+        const link = document.createElement('a');
+        link.download = `schedule_wallpaper_${new Date().toISOString().slice(0, 10)}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+
+        showToast('Wallpaper saved!', 'success');
+    } catch (error) {
+        console.error('Error saving wallpaper:', error);
+        showToast('Error saving wallpaper. Try screenshot instead.', 'error');
+    }
 }

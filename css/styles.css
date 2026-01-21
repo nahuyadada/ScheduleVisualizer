@@ -1211,3 +1211,252 @@ footer p {
 .modal-btn.confirm-btn.success:hover {
     box-shadow: 0 5px 20px rgba(46, 204, 113, 0.4);
 }
+
+/* Schedule Header Actions */
+.schedule-header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.mobile-wallpaper-btn {
+    background: linear-gradient(90deg, #555, #333);
+    border: 2px solid #fff;
+    padding: 10px 20px;
+    border-radius: 10px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mobile-wallpaper-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 20px rgba(255, 255, 255, 0.2);
+}
+
+/* Mobile Wallpaper Modal */
+.mobile-wallpaper-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    animation: fadeIn 0.3s ease;
+}
+
+.mobile-wallpaper-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-height: 100vh;
+    padding: 20px;
+}
+
+.mobile-wallpaper-header {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #888;
+}
+
+.mobile-wallpaper-header h3 {
+    color: #fff;
+    margin-bottom: 5px;
+    font-size: 1.2rem;
+}
+
+.mobile-wallpaper-header p {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.mobile-wallpaper-content {
+    background: #000;
+    border: 2px solid #333;
+    border-radius: 40px;
+    overflow: hidden;
+    /* iPhone 15 Pro dimensions */
+    width: 393px;
+    height: 852px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.mobile-wallpaper-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+}
+
+.close-wallpaper-btn {
+    background: transparent;
+    border: 2px solid #fff;
+    padding: 12px 30px;
+    border-radius: 25px;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+}
+
+.close-wallpaper-btn:hover {
+    background: #fff;
+    color: #000;
+}
+
+.save-wallpaper-btn {
+    background: linear-gradient(90deg, #00d9ff, #00ff88);
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    color: #1a1a2e;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+}
+
+.save-wallpaper-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 20px rgba(0, 217, 255, 0.4);
+}
+
+/* Mobile Wallpaper Grid Schedule - Matching User's Wallpaper */
+.mobile-schedule-grid {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #000;
+    color: #fff;
+    font-family: 'SF Pro Display', 'Segoe UI', -apple-system, sans-serif;
+    padding-top: 180px;
+    /* Space for lock screen clock */
+}
+
+.mobile-grid-container {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 32px repeat(6, 1fr);
+    /* 6 days: Mon-Sat */
+    grid-template-rows: 22px repeat(24, 1fr);
+    /* Header + 24 half-hour slots */
+    gap: 0;
+    padding: 0 2px 60px 2px;
+    /* Bottom padding for home indicator */
+    overflow: hidden;
+}
+
+/* Day headers */
+.mobile-grid-header {
+    font-size: 0.5rem;
+    font-weight: 500;
+    color: #666;
+    text-align: center;
+    padding: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #333;
+}
+
+.mobile-grid-header.time-header {
+    color: #444;
+    font-size: 0.4rem;
+}
+
+/* Time labels */
+.mobile-time-label {
+    font-size: 0.45rem;
+    color: #555;
+    padding: 1px 2px;
+    text-align: right;
+    border-right: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    line-height: 1;
+}
+
+.mobile-time-label .time-main {
+    font-weight: 600;
+    color: #777;
+}
+
+.mobile-time-label .time-sub {
+    font-size: 0.35rem;
+    color: #444;
+}
+
+/* Grid cells */
+.mobile-grid-cell {
+    border: 1px solid #222;
+    position: relative;
+    min-height: 30px;
+}
+
+.mobile-grid-cell.hour-start {
+    border-top: 1px solid #333;
+}
+
+/* Course blocks in grid */
+.mobile-course-block {
+    position: absolute;
+    left: 1px;
+    right: 1px;
+    background: #2a2a2a;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 3px 4px;
+    overflow: hidden;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 1px;
+}
+
+.mobile-course-code {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.3px;
+}
+
+.mobile-course-section {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.1;
+    letter-spacing: 0.2px;
+}
+
+.mobile-course-room {
+    font-size: 0.55rem;
+    font-weight: 600;
+    color: #ccc;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Empty state */
+.mobile-no-classes {
+    text-align: center;
+    color: #555;
+    font-size: 0.9rem;
+    font-style: italic;
+    padding: 40px 20px;
+    margin-top: 200px;
+}
