@@ -1269,20 +1269,20 @@ footer p {
 }
 
 .wallpaper-sidebar {
-    width: 220px;
-    min-width: 220px;
+    width: 240px;
+    min-width: 240px;
     background: rgba(30, 30, 50, 0.95);
     border-radius: 15px;
     padding: 15px;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
     overflow-y: auto;
     max-height: calc(100vh - 40px);
 }
 
 .sidebar-section {
-    padding: 10px;
+    padding: 8px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
 }
@@ -1290,7 +1290,7 @@ footer p {
 .sidebar-section h4 {
     margin: 0;
     color: #00d9ff;
-    font-size: 1rem;
+    font-size: 0.9rem;
     text-align: center;
 }
 
@@ -1301,6 +1301,178 @@ footer p {
     margin-bottom: 8px;
     text-transform: uppercase;
     letter-spacing: 1px;
+}
+
+/* Device Presets */
+.device-presets {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.device-preset-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.device-preset-btn:hover {
+    background: rgba(0, 217, 255, 0.1);
+    border-color: rgba(0, 217, 255, 0.3);
+}
+
+.device-preset-btn.active {
+    background: rgba(0, 217, 255, 0.15);
+    border-color: #00d9ff;
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.2);
+}
+
+.preset-icon {
+    font-size: 1.1rem;
+}
+
+.preset-name {
+    flex: 1;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.preset-size {
+    color: #666;
+    font-size: 0.65rem;
+    font-family: 'SF Mono', monospace;
+}
+
+.device-preset-btn.active .preset-name {
+    color: #00d9ff;
+}
+
+.device-preset-btn.active .preset-size {
+    color: #00d9ff;
+}
+
+/* Custom Size Inputs */
+.custom-size-inputs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.size-input-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.size-input-group label {
+    color: #888;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.size-input-group input {
+    width: 55px;
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.size-input-group input:focus {
+    outline: none;
+    border-color: #00d9ff;
+    box-shadow: 0 0 5px rgba(0, 217, 255, 0.3);
+}
+
+.size-separator {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.apply-size-btn {
+    padding: 6px 12px;
+    background: linear-gradient(90deg, #00d9ff, #00ff88);
+    border: none;
+    border-radius: 6px;
+    color: #1a1a2e;
+    font-size: 0.75rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.apply-size-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 3px 10px rgba(0, 217, 255, 0.3);
+}
+
+/* Layout Position Controls */
+.layout-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.layout-slider-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.layout-slider-group label {
+    color: #888;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.layout-slider-group input[type="range"] {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.layout-slider-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: linear-gradient(90deg, #00d9ff, #00ff88);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.layout-slider-group input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: linear-gradient(90deg, #00d9ff, #00ff88);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.slider-value {
+    color: #00d9ff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: right;
 }
 
 .color-grid {
@@ -1449,7 +1621,23 @@ footer p {
     cursor: pointer;
     padding: 0;
     overflow: hidden;
-    background: transparent;
+    /* Rainbow gradient background */
+    background: conic-gradient(from 0deg,
+            #ff0000,
+            #ff8000,
+            #ffff00,
+            #00ff00,
+            #00ffff,
+            #0000ff,
+            #8000ff,
+            #ff00ff,
+            #ff0000);
+    transition: all 0.2s ease;
+}
+
+.custom-color-input:hover {
+    transform: scale(1.15);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.3);
 }
 
 .custom-color-input::-webkit-color-swatch-wrapper {
@@ -1486,7 +1674,175 @@ footer p {
     transform: scale(1.1);
 }
 
-/* Mobile Wallpaper Grid Schedule - Matching User's Wallpaper */
+/* Lockscreen Layout - iPhone Style */
+.lockscreen-layout {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    font-family: 'SF Pro Display', 'Segoe UI', -apple-system, sans-serif;
+}
+
+.lockscreen-top {
+    /* Empty space for iOS date/time display */
+    flex-shrink: 0;
+}
+
+.lockscreen-schedule {
+    /* Schedule grid area in the middle */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 10px;
+    flex-shrink: 0;
+}
+
+.lockscreen-bottom {
+    /* Empty space for iOS controls (camera, flashlight) */
+    flex-shrink: 0;
+}
+
+.schedule-grid-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Day Headers */
+.day-headers {
+    display: grid;
+    height: 22px;
+    flex-shrink: 0;
+}
+
+.time-header-cell {
+    /* Empty corner */
+    display: block;
+}
+
+.day-header-cell {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: #888;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #333;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Schedule Body */
+.schedule-body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* Time Column */
+.time-column {
+    width: 30px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.time-cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-end;
+    padding: 1px 3px 0 0;
+    border-right: 1px solid #333;
+    box-sizing: border-box;
+}
+
+.time-hour {
+    font-size: 0.55rem;
+    font-weight: 600;
+    color: #666;
+    line-height: 1;
+}
+
+.time-period {
+    font-size: 0.4rem;
+    color: #555;
+    line-height: 1;
+}
+
+/* Days Container */
+.days-container {
+    flex: 1;
+    display: grid;
+}
+
+.day-column {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #222;
+}
+
+.hour-cell {
+    box-sizing: border-box;
+    border-bottom: 1px solid #222;
+}
+
+.hour-cell:nth-child(odd) {
+    border-bottom-color: #333;
+}
+
+/* Course blocks in grid */
+.mobile-course-block {
+    position: absolute;
+    left: 1px;
+    right: 1px;
+    background: #2a2a2a;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 2px 3px;
+    overflow: hidden;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0px;
+}
+
+.mobile-course-code {
+    font-size: 0.55rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.2px;
+}
+
+.mobile-course-section {
+    font-size: 0.5rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.1;
+    letter-spacing: 0.1px;
+}
+
+.mobile-course-room {
+    font-size: 0.45rem;
+    font-weight: 600;
+    color: #ccc;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Legacy support - keep old classes for compatibility */
 .mobile-schedule-grid {
     flex: 1;
     display: flex;
@@ -1495,23 +1851,16 @@ footer p {
     color: #fff;
     font-family: 'SF Pro Display', 'Segoe UI', -apple-system, sans-serif;
     padding-top: 10px;
-    /* Minimal space above */
 }
 
 .mobile-grid-container {
     flex: 1;
     display: grid;
-    grid-template-columns: 32px repeat(6, 1fr);
-    /* 6 days: Mon-Sat */
-    grid-template-rows: 22px repeat(24, 1fr);
-    /* Header + 24 half-hour slots */
     gap: 0;
     padding: 0 2px 60px 2px;
-    /* Bottom padding for home indicator */
     overflow: hidden;
 }
 
-/* Day headers */
 .mobile-grid-header {
     font-size: 0.5rem;
     font-weight: 500;
@@ -1528,7 +1877,6 @@ footer p {
     font-size: 0.4rem;
 }
 
-/* Time labels */
 .mobile-time-label {
     font-size: 0.45rem;
     color: #555;
@@ -1551,7 +1899,6 @@ footer p {
     color: #444;
 }
 
-/* Grid cells */
 .mobile-grid-cell {
     border: 1px solid #222;
     position: relative;
@@ -1560,52 +1907,6 @@ footer p {
 
 .mobile-grid-cell.hour-start {
     border-top: 1px solid #333;
-}
-
-/* Course blocks in grid */
-.mobile-course-block {
-    position: absolute;
-    left: 1px;
-    right: 1px;
-    background: #2a2a2a;
-    border: 1px solid #555;
-    border-radius: 4px;
-    padding: 3px 4px;
-    overflow: hidden;
-    z-index: 5;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    gap: 1px;
-}
-
-.mobile-course-code {
-    font-size: 0.65rem;
-    font-weight: 800;
-    color: #fff;
-    line-height: 1.1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    letter-spacing: 0.3px;
-}
-
-.mobile-course-section {
-    font-size: 0.6rem;
-    font-weight: 700;
-    color: #fff;
-    line-height: 1.1;
-    letter-spacing: 0.2px;
-}
-
-.mobile-course-room {
-    font-size: 0.55rem;
-    font-weight: 600;
-    color: #ccc;
-    line-height: 1.1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 /* Empty state */

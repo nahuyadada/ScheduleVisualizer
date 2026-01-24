@@ -155,6 +155,78 @@ IT332  Capstone  T  05:00 PM - 07:00 PM  FIELD LEC"></textarea>
             <!-- Left Sidebar - Color Controls -->
             <div class="wallpaper-sidebar">
                 <div class="sidebar-section">
+                    <h4>📐 Size & Layout</h4>
+                </div>
+
+                <div class="sidebar-section">
+                    <span class="sidebar-label">Presets</span>
+                    <div class="device-presets">
+                        <button class="device-preset-btn active" data-width="393" data-height="852" data-top="0"
+                            data-schedule="100" data-bottom="0" title="Fullscreen - No spacing">
+                            <span class="preset-icon">🖼️</span>
+                            <span class="preset-name">Fullscreen</span>
+                            <span class="preset-size">No margins</span>
+                        </button>
+                        <button class="device-preset-btn" data-width="393" data-height="852" data-top="28"
+                            data-schedule="62" data-bottom="10" title="iPhone 15 Pro Lockscreen">
+                            <span class="preset-icon">📱</span>
+                            <span class="preset-name">15 Pro Lock</span>
+                            <span class="preset-size">393×852</span>
+                        </button>
+                        <button class="device-preset-btn" data-width="430" data-height="932" data-top="28"
+                            data-schedule="62" data-bottom="10" title="iPhone 15 Pro Max Lockscreen">
+                            <span class="preset-icon">📱</span>
+                            <span class="preset-name">15 Max Lock</span>
+                            <span class="preset-size">430×932</span>
+                        </button>
+                        <button class="device-preset-btn" data-width="390" data-height="844" data-top="28"
+                            data-schedule="62" data-bottom="10" title="iPhone 14/13/12 Lockscreen">
+                            <span class="preset-icon">📱</span>
+                            <span class="preset-name">14/13 Lock</span>
+                            <span class="preset-size">390×844</span>
+                        </button>
+                        <button class="device-preset-btn" data-width="375" data-height="812" data-top="26"
+                            data-schedule="64" data-bottom="10" title="iPhone 11 Pro / X Lockscreen">
+                            <span class="preset-icon">📱</span>
+                            <span class="preset-name">11 Pro Lock</span>
+                            <span class="preset-size">375×812</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <span class="sidebar-label">📍 Position & Size</span>
+                    <div class="layout-controls">
+                        <div class="layout-slider-group">
+                            <label>Top Offset</label>
+                            <input type="range" id="topOffsetSlider" min="0" max="50" value="0">
+                            <span class="slider-value" id="topOffsetValue">0%</span>
+                        </div>
+                        <div class="layout-slider-group">
+                            <label>Schedule Height</label>
+                            <input type="range" id="scheduleHeightSlider" min="40" max="100" value="100">
+                            <span class="slider-value" id="scheduleHeightValue">100%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <span class="sidebar-label">Custom Size</span>
+                    <div class="custom-size-inputs">
+                        <div class="size-input-group">
+                            <label for="customWidth">W</label>
+                            <input type="number" id="customWidth" value="393" min="200" max="600">
+                        </div>
+                        <span class="size-separator">×</span>
+                        <div class="size-input-group">
+                            <label for="customHeight">H</label>
+                            <input type="number" id="customHeight" value="852" min="400" max="1200">
+                        </div>
+                        <button class="apply-size-btn" onclick="applyCustomSize()">Apply</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
                     <h4>🎨 Customize Colors</h4>
                 </div>
 

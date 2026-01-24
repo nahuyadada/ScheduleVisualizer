@@ -1663,6 +1663,13 @@ function extractDaysFromText(text) {
 let currentWallpaperColor = '#000000';
 let currentBoxColor = '#2a2a2a';
 let currentTextColor = '#ffffff';
+let currentWallpaperWidth = 393;
+let currentWallpaperHeight = 852;
+
+// Layout position variables (default: fullscreen with no margins)
+let currentTopOffset = 0;
+let currentScheduleHeight = 100;
+let currentBottomSpace = 0;
 
 function showMobileWallpaper() {
     if (courses.length === 0) {
@@ -1672,6 +1679,19 @@ function showMobileWallpaper() {
 
     const modal = document.getElementById('mobileWallpaperModal');
     const content = document.getElementById('mobileWallpaperContent');
+
+    // Apply current dimensions
+    content.style.width = currentWallpaperWidth + 'px';
+    content.style.height = currentWallpaperHeight + 'px';
+
+    // Update custom size inputs
+    const widthInput = document.getElementById('customWidth');
+    const heightInput = document.getElementById('customHeight');
+    if (widthInput) widthInput.value = currentWallpaperWidth;
+    if (heightInput) heightInput.value = currentWallpaperHeight;
+
+    // Sync layout sliders
+    syncLayoutSliders();
 
     // Generate the mobile schedule content
     content.innerHTML = generateMobileScheduleHTML();
@@ -1684,11 +1704,74 @@ function showMobileWallpaper() {
     // Setup color picker event listeners
     setupColorPicker();
 
+    // Setup device preset event listeners
+    setupDevicePresets();
+
+    // Setup layout controls
+    setupLayoutControls();
+
     // Show the modal
     modal.style.display = 'flex';
 
     // Prevent body scroll
     document.body.style.overflow = 'hidden';
+}
+
+function syncLayoutSliders() {
+    const topSlider = document.getElementById('topOffsetSlider');
+    const scheduleSlider = document.getElementById('scheduleHeightSlider');
+    const topValue = document.getElementById('topOffsetValue');
+    const scheduleValue = document.getElementById('scheduleHeightValue');
+
+    if (topSlider) {
+        topSlider.value = currentTopOffset;
+        topValue.textContent = currentTopOffset + '%';
+    }
+    if (scheduleSlider) {
+        scheduleSlider.value = currentScheduleHeight;
+        scheduleValue.textContent = currentScheduleHeight + '%';
+    }
+
+    // Auto-calculate bottom space
+    currentBottomSpace = Math.max(0, 100 - currentTopOffset - currentScheduleHeight);
+}
+
+function setupLayoutControls() {
+    const topSlider = document.getElementById('topOffsetSlider');
+    const scheduleSlider = document.getElementById('scheduleHeightSlider');
+
+    if (topSlider) {
+        topSlider.addEventListener('input', (e) => {
+            currentTopOffset = parseInt(e.target.value);
+            document.getElementById('topOffsetValue').textContent = currentTopOffset + '%';
+            // Auto-calculate bottom space
+            currentBottomSpace = Math.max(0, 100 - currentTopOffset - currentScheduleHeight);
+            updateWallpaperLayout();
+        });
+    }
+
+    if (scheduleSlider) {
+        scheduleSlider.addEventListener('input', (e) => {
+            currentScheduleHeight = parseInt(e.target.value);
+            document.getElementById('scheduleHeightValue').textContent = currentScheduleHeight + '%';
+            // Auto-calculate bottom space
+            currentBottomSpace = Math.max(0, 100 - currentTopOffset - currentScheduleHeight);
+            updateWallpaperLayout();
+        });
+    }
+}
+
+function updateWallpaperLayout() {
+    const content = document.getElementById('mobileWallpaperContent');
+    if (!content) return;
+
+    // Regenerate with new layout
+    content.innerHTML = generateMobileScheduleHTML();
+
+    // Reapply colors
+    applyWallpaperColor(currentWallpaperColor);
+    applyBoxColor(currentBoxColor);
+    applyTextColor(currentTextColor);
 }
 
 function setupColorPicker() {
@@ -1766,6 +1849,91 @@ function setupColorPicker() {
     }
 }
 
+function setupDevicePresets() {
+    const presetBtns = document.querySelectorAll('.device-preset-btn');
+
+    presetBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Remove active from all presets
+            presetBtns.forEach(b => b.classList.remove('active'));
+            // Add active to clicked
+            btn.classList.add('active');
+
+            // Get dimensions from data attributes
+            const width = parseInt(btn.dataset.width);
+            const height = parseInt(btn.dataset.height);
+
+            // Get layout position from data attributes
+            const top = parseInt(btn.dataset.top) || 0;
+            const schedule = parseInt(btn.dataset.schedule) || 100;
+            const bottom = parseInt(btn.dataset.bottom) || 0;
+
+            // Update layout position variables
+            currentTopOffset = top;
+            currentScheduleHeight = schedule;
+            currentBottomSpace = bottom;
+
+            // Apply the new size
+            applyWallpaperSize(width, height);
+
+            // Update custom input fields
+            const widthInput = document.getElementById('customWidth');
+            const heightInput = document.getElementById('customHeight');
+            if (widthInput) widthInput.value = width;
+            if (heightInput) heightInput.value = height;
+
+            // Sync layout sliders
+            syncLayoutSliders();
+        });
+    });
+}
+
+function applyCustomSize() {
+    const widthInput = document.getElementById('customWidth');
+    const heightInput = document.getElementById('customHeight');
+
+    if (!widthInput || !heightInput) return;
+
+    const width = parseInt(widthInput.value) || 393;
+    const height = parseInt(heightInput.value) || 852;
+
+    // Clamp values
+    const clampedWidth = Math.max(200, Math.min(600, width));
+    const clampedHeight = Math.max(400, Math.min(1200, height));
+
+    // Update inputs with clamped values
+    widthInput.value = clampedWidth;
+    heightInput.value = clampedHeight;
+
+    // Remove active from all presets (since this is a custom size)
+    const presetBtns = document.querySelectorAll('.device-preset-btn');
+    presetBtns.forEach(b => b.classList.remove('active'));
+
+    // Apply the size
+    applyWallpaperSize(clampedWidth, clampedHeight);
+
+    showToast(`Resized to ${clampedWidth}×${clampedHeight}`, 'success');
+}
+
+function applyWallpaperSize(width, height) {
+    currentWallpaperWidth = width;
+    currentWallpaperHeight = height;
+
+    const content = document.getElementById('mobileWallpaperContent');
+    if (content) {
+        content.style.width = width + 'px';
+        content.style.height = height + 'px';
+
+        // Regenerate the schedule to fit new dimensions
+        content.innerHTML = generateMobileScheduleHTML();
+
+        // Reapply colors
+        applyWallpaperColor(currentWallpaperColor);
+        applyBoxColor(currentBoxColor);
+        applyTextColor(currentTextColor);
+    }
+}
+
 function applyBoxColor(color) {
     const content = document.getElementById('mobileWallpaperContent');
     const blocks = content.querySelectorAll('.mobile-course-block');
@@ -1799,19 +1967,61 @@ function applyTextColor(color) {
 
 function applyWallpaperColor(color) {
     const content = document.getElementById('mobileWallpaperContent');
-    const grid = content.querySelector('.mobile-schedule-grid');
 
     if (content) {
         content.style.backgroundColor = color;
     }
+
+    const isDark = isColorDark(color);
+
+    // Handle new lockscreen layout
+    const lockscreenLayout = content.querySelector('.lockscreen-layout');
+    if (lockscreenLayout) {
+        lockscreenLayout.style.backgroundColor = color;
+
+        // Update day headers
+        const dayHeaders = content.querySelectorAll('.day-header-cell');
+        dayHeaders.forEach(header => {
+            header.style.color = isDark ? '#888' : '#555';
+            header.style.borderColor = isDark ? '#333' : '#ccc';
+        });
+
+        // Update time cells
+        const timeCells = content.querySelectorAll('.time-cell');
+        timeCells.forEach(cell => {
+            cell.style.borderColor = isDark ? '#333' : '#ccc';
+        });
+
+        const timeHours = content.querySelectorAll('.time-hour');
+        timeHours.forEach(hour => {
+            hour.style.color = isDark ? '#666' : '#555';
+        });
+
+        const timePeriods = content.querySelectorAll('.time-period');
+        timePeriods.forEach(period => {
+            period.style.color = isDark ? '#555' : '#888';
+        });
+
+        // Update grid cells
+        const dayColumns = content.querySelectorAll('.day-column');
+        dayColumns.forEach(col => {
+            col.style.borderColor = isDark ? '#222' : '#ccc';
+        });
+
+        const hourCells = content.querySelectorAll('.hour-cell');
+        hourCells.forEach(cell => {
+            cell.style.borderColor = isDark ? '#222' : '#ccc';
+        });
+
+        return;
+    }
+
+    // Legacy support for old layout
+    const grid = content.querySelector('.mobile-schedule-grid');
     if (grid) {
         grid.style.backgroundColor = color;
-
-        // Adjust text color based on background brightness
-        const isDark = isColorDark(color);
         grid.style.color = isDark ? '#fff' : '#333';
 
-        // Update grid cell borders and time labels
         const cells = grid.querySelectorAll('.mobile-grid-cell');
         const headers = grid.querySelectorAll('.mobile-grid-header');
         const timeLabels = grid.querySelectorAll('.mobile-time-label');
@@ -1860,23 +2070,16 @@ function generateMobileScheduleHTML() {
 
     // Build days array dynamically
     const days = hasSunday ? ['M', 'T', 'W', 'TH', 'F', 'S', 'SU'] : ['M', 'T', 'W', 'TH', 'F', 'S'];
-    const dayNames = hasSunday ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayNames = hasSunday ? ['M', 'T', 'W', 'TH', 'F', 'S', 'SU'] : ['M', 'T', 'W', 'TH', 'F', 'S'];
     const dayAbbrev = hasSunday
         ? { 'M': 0, 'T': 1, 'W': 2, 'TH': 3, 'F': 4, 'S': 5, 'SU': 6 }
         : { 'M': 0, 'T': 1, 'W': 2, 'TH': 3, 'F': 4, 'S': 5 };
     const numDays = days.length;
 
-    // Time range: 7:00 AM to 9:00 PM (28 half-hour slots)
+    // Time range: 7:00 AM to 9:00 PM (14 hours)
     const startHour = 7;
     const endHour = 21; // 9 PM
-    const numSlots = (endHour - startHour) * 2; // 28 half-hour slots
-
-    // Create a grid to track course placements
-    // grid[dayIndex][slotIndex] = course data or null
-    const grid = [];
-    for (let d = 0; d < numDays; d++) {
-        grid[d] = new Array(numSlots).fill(null);
-    }
+    const numHours = endHour - startHour; // 14 hours
 
     // Place courses into the grid
     const coursePlacements = []; // {dayIndex, startSlot, endSlot, course}
@@ -1889,11 +2092,11 @@ function generateMobileScheduleHTML() {
 
         if (startMinutes === null || endMinutes === null) return;
 
-        // Convert to slot index (relative to 7:00 AM)
-        const startSlot = Math.floor((startMinutes - startHour * 60) / 30);
-        const endSlot = Math.ceil((endMinutes - startHour * 60) / 30);
+        // Convert to hour-based position
+        const startPos = (startMinutes - startHour * 60) / 60; // in hours
+        const endPos = (endMinutes - startHour * 60) / 60; // in hours
 
-        if (startSlot < 0 || endSlot > numSlots) return; // Out of range
+        if (startPos < 0 || endPos > numHours) return; // Out of range
 
         course.days.forEach(dayCode => {
             const dayIndex = dayAbbrev[dayCode];
@@ -1901,8 +2104,8 @@ function generateMobileScheduleHTML() {
 
             coursePlacements.push({
                 dayIndex,
-                startSlot,
-                endSlot,
+                startPos,
+                endPos,
                 course: {
                     code: course.code,
                     section: course.section || '',
@@ -1912,62 +2115,91 @@ function generateMobileScheduleHTML() {
         });
     });
 
-    // Build HTML
-    let html = `<div class="mobile-schedule-grid" data-days="${numDays}">`;
-    html += `<div class="mobile-grid-container" style="grid-template-columns: 32px repeat(${numDays}, 1fr); grid-template-rows: 22px repeat(${numSlots}, 1fr);">`;
+    // Calculate grid dimensions based on wallpaper size
+    // Use dynamic layout variables
+    const topSpacePercent = currentTopOffset;
+    const scheduleHeightPercent = currentScheduleHeight;
+    const bottomSpacePercent = currentBottomSpace;
 
-    // Header row
-    html += `<div class="mobile-grid-header time-header"></div>`; // Empty corner
+    // Schedule grid internal dimensions
+    const scheduleWidth = currentWallpaperWidth - 20; // 10px padding each side
+    const scheduleAreaHeight = (currentWallpaperHeight * scheduleHeightPercent) / 100;
+
+    // Each hour gets equal height
+    const hourHeight = scheduleAreaHeight / numHours;
+    const dayWidth = (scheduleWidth - 30) / numDays; // 30px for time column
+
+    // Build HTML with lockscreen layout
+    let html = `<div class="lockscreen-layout">`;
+
+    // Top area (empty for iOS date/time)
+    html += `<div class="lockscreen-top" style="height: ${topSpacePercent}%;"></div>`;
+
+    // Middle: Schedule grid area
+    html += `<div class="lockscreen-schedule" style="height: ${scheduleHeightPercent}%;">`;
+    html += `<div class="schedule-grid-wrapper">`;
+
+    // Day headers
+    html += `<div class="day-headers" style="grid-template-columns: 30px repeat(${numDays}, 1fr);">`;
+    html += `<div class="time-header-cell"></div>`; // Empty corner
     dayNames.forEach(day => {
-        html += `<div class="mobile-grid-header">${day}</div>`;
+        html += `<div class="day-header-cell">${day}</div>`;
     });
+    html += `</div>`;
 
-    // Time slots and cells
-    for (let slot = 0; slot < numSlots; slot++) {
-        const hour = startHour + Math.floor(slot / 2);
-        const minutes = (slot % 2) * 30;
-        const isHourStart = minutes === 0;
+    // Schedule grid with time column and day columns
+    html += `<div class="schedule-body">`;
 
-        // Time label
-        const displayHour = hour > 12 ? hour - 12 : hour;
-        const period = hour >= 12 ? 'PM' : 'AM';
-        const minuteStr = minutes.toString().padStart(2, '0');
+    // Time column
+    html += `<div class="time-column">`;
+    for (let h = 0; h < numHours; h++) {
+        const hour = startHour + h;
+        const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+        const period = hour >= 12 ? 'P' : 'A';
+        html += `<div class="time-cell" style="height: ${hourHeight}px;">
+            <span class="time-hour">${displayHour}</span>
+            <span class="time-period">${period}</span>
+        </div>`;
+    }
+    html += `</div>`;
 
-        html += `
-            <div class="mobile-time-label">
-                <span class="time-main">${displayHour}:${minuteStr}</span>
-                <span class="time-sub">${period}</span>
-            </div>
-        `;
+    // Day columns with course blocks
+    html += `<div class="days-container" style="grid-template-columns: repeat(${numDays}, 1fr);">`;
 
-        // Day cells (dynamic: Mon-Sat or Mon-Sun)
-        for (let d = 0; d < numDays; d++) {
-            const cellClass = isHourStart ? 'mobile-grid-cell hour-start' : 'mobile-grid-cell';
-            html += `<div class="${cellClass}" data-day="${d}" data-slot="${slot}">`;
+    for (let d = 0; d < numDays; d++) {
+        html += `<div class="day-column">`;
 
-            // Check if a course starts at this slot
-            const placement = coursePlacements.find(p => p.dayIndex === d && p.startSlot === slot);
-            if (placement) {
-                const slotSpan = placement.endSlot - placement.startSlot;
-                const height = slotSpan * 30 - 2; // 30px per slot minus border
-
-                // Abbreviate room names for better fit
-                const roomDisplay = abbreviateRoom(placement.course.room);
-
-                html += `
-                    <div class="mobile-course-block" style="height: ${height}px;">
-                        <div class="mobile-course-code">${placement.course.code}</div>
-                        <div class="mobile-course-section">${placement.course.section}</div>
-                        <div class="mobile-course-room">${roomDisplay}</div>
-                    </div>
-                `;
-            }
-
-            html += `</div>`;
+        // Add hour grid lines
+        for (let h = 0; h < numHours; h++) {
+            html += `<div class="hour-cell" style="height: ${hourHeight}px;"></div>`;
         }
+
+        // Add course blocks for this day
+        const dayCourses = coursePlacements.filter(p => p.dayIndex === d);
+        dayCourses.forEach(placement => {
+            const topPos = placement.startPos * hourHeight;
+            const height = (placement.endPos - placement.startPos) * hourHeight - 2;
+            const roomDisplay = abbreviateRoom(placement.course.room);
+
+            html += `<div class="mobile-course-block" style="top: ${topPos}px; height: ${height}px;">
+                <div class="mobile-course-code">${placement.course.code}</div>
+                <div class="mobile-course-section">${placement.course.section}</div>
+                <div class="mobile-course-room">${roomDisplay}</div>
+            </div>`;
+        });
+
+        html += `</div>`;
     }
 
-    html += `</div></div>`;
+    html += `</div>`; // days-container
+    html += `</div>`; // schedule-body
+    html += `</div>`; // schedule-grid-wrapper
+    html += `</div>`; // lockscreen-schedule
+
+    // Bottom area (empty for iOS controls)
+    html += `<div class="lockscreen-bottom" style="height: ${bottomSpacePercent}%;"></div>`;
+
+    html += `</div>`; // lockscreen-layout
 
     return html;
 }
