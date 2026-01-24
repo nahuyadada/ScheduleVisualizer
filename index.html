@@ -150,17 +150,104 @@ IT332  Capstone  T  05:00 PM - 07:00 PM  FIELD LEC"></textarea>
 
     <!-- Mobile Wallpaper Modal -->
     <div class="mobile-wallpaper-overlay" id="mobileWallpaperModal" style="display: none;">
-        <div class="mobile-wallpaper-container">
-            <div class="mobile-wallpaper-header">
-                <h3>📱 Mobile Wallpaper Preview</h3>
-                <p>Screenshot this view for your phone wallpaper</p>
+        <div class="mobile-wallpaper-layout">
+            <!-- Left Sidebar - Color Controls -->
+            <div class="wallpaper-sidebar">
+                <div class="sidebar-section">
+                    <h4>🎨 Customize Colors</h4>
+                </div>
+
+                <div class="sidebar-section">
+                    <span class="sidebar-label">Background</span>
+                    <div class="color-grid">
+                        <button class="color-option active" data-color="#000000" title="Black"
+                            style="background: #000000;"></button>
+                        <button class="color-option" data-color="#1a1a2e" title="Dark Blue"
+                            style="background: #1a1a2e;"></button>
+                        <button class="color-option" data-color="#ffffff" title="White"
+                            style="background: #ffffff; border: 2px solid #333;"></button>
+                        <button class="color-option" data-color="#ffc0cb" title="Pink"
+                            style="background: #ffc0cb;"></button>
+                        <button class="color-option" data-color="#ffb6c1" title="Light Pink"
+                            style="background: #ffb6c1;"></button>
+                        <button class="color-option" data-color="#e6e6fa" title="Lavender"
+                            style="background: #e6e6fa;"></button>
+                        <button class="color-option" data-color="#add8e6" title="Light Blue"
+                            style="background: #add8e6;"></button>
+                        <button class="color-option" data-color="#87ceeb" title="Sky Blue"
+                            style="background: #87ceeb;"></button>
+                        <button class="color-option" data-color="#98d8c8" title="Mint"
+                            style="background: #98d8c8;"></button>
+                        <button class="color-option" data-color="#dda0dd" title="Plum"
+                            style="background: #dda0dd;"></button>
+                        <input type="color" id="customWallpaperColor" class="custom-color-input" title="Custom"
+                            value="#000000">
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <span class="sidebar-label">Boxes</span>
+                    <div class="color-grid">
+                        <button class="box-color-option active" data-color="#2a2a2a" title="Dark Gray"
+                            style="background: #2a2a2a;"></button>
+                        <button class="box-color-option" data-color="#3d5a80" title="Steel Blue"
+                            style="background: #3d5a80;"></button>
+                        <button class="box-color-option" data-color="#5c4d7d" title="Purple"
+                            style="background: #5c4d7d;"></button>
+                        <button class="box-color-option" data-color="#7b2d5b" title="Burgundy"
+                            style="background: #7b2d5b;"></button>
+                        <button class="box-color-option" data-color="#1d3557" title="Navy"
+                            style="background: #1d3557;"></button>
+                        <button class="box-color-option" data-color="#2d6a4f" title="Forest"
+                            style="background: #2d6a4f;"></button>
+                        <button class="box-color-option" data-color="#ffffff" title="White"
+                            style="background: #ffffff; border: 2px solid #333;"></button>
+                        <button class="box-color-option" data-color="#ffc0cb" title="Pink"
+                            style="background: #ffc0cb;"></button>
+                        <button class="box-color-option" data-color="#add8e6" title="Light Blue"
+                            style="background: #add8e6;"></button>
+                        <button class="box-color-option" data-color="#98d8c8" title="Mint"
+                            style="background: #98d8c8;"></button>
+                        <input type="color" id="customBoxColor" class="custom-color-input" title="Custom"
+                            value="#2a2a2a">
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <span class="sidebar-label">Text</span>
+                    <div class="color-grid">
+                        <button class="text-color-option active" data-color="#ffffff" title="White"
+                            style="background: #ffffff; border: 2px solid #333;"></button>
+                        <button class="text-color-option" data-color="#000000" title="Black"
+                            style="background: #000000;"></button>
+                        <button class="text-color-option" data-color="#333333" title="Dark Gray"
+                            style="background: #333333;"></button>
+                        <button class="text-color-option" data-color="#ff6b6b" title="Coral"
+                            style="background: #ff6b6b;"></button>
+                        <button class="text-color-option" data-color="#ffd93d" title="Yellow"
+                            style="background: #ffd93d;"></button>
+                        <button class="text-color-option" data-color="#6bcb77" title="Green"
+                            style="background: #6bcb77;"></button>
+                        <button class="text-color-option" data-color="#4d96ff" title="Blue"
+                            style="background: #4d96ff;"></button>
+                        <button class="text-color-option" data-color="#ff6eb4" title="Hot Pink"
+                            style="background: #ff6eb4;"></button>
+                        <input type="color" id="customTextColor" class="custom-color-input" title="Custom"
+                            value="#ffffff">
+                    </div>
+                </div>
+
+                <div class="sidebar-section sidebar-actions">
+                    <button class="save-wallpaper-btn" onclick="saveMobileWallpaper()">💾 Save as PNG</button>
+                    <button class="close-wallpaper-btn" onclick="closeMobileWallpaper()">✕ Close</button>
+                </div>
             </div>
-            <div class="mobile-wallpaper-content" id="mobileWallpaperContent">
-                <!-- Mobile wallpaper will be generated here -->
-            </div>
-            <div class="mobile-wallpaper-actions">
-                <button class="save-wallpaper-btn" onclick="saveMobileWallpaper()">💾 Save as PNG</button>
-                <button class="close-wallpaper-btn" onclick="closeMobileWallpaper()">✕ Close</button>
+
+            <!-- Right Side - Wallpaper Preview -->
+            <div class="wallpaper-preview-area">
+                <div class="mobile-wallpaper-content" id="mobileWallpaperContent">
+                    <!-- Mobile wallpaper will be generated here -->
+                </div>
             </div>
         </div>
     </div>

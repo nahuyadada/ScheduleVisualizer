@@ -1153,27 +1153,36 @@ function parseScheduleFromText(text) {
     const extractedCourses = [];
     const lines = text.split('\n').map(line => line.trim()).filter(line => line);
 
-    // Check if this is the multi-line format (starts with CCS or similar college code)
-    if (text.includes('BACHELOR OF SCIENCE') || text.includes('CCS')) {
-        return parseMultiLineFormat(lines);
-    }
+    console.log('parseScheduleFromText called');
+    console.log('Total lines:', lines.length);
+    console.log('First few lines:', lines.slice(0, 5));
 
-    // Check if this is the block format (starts with course code, then G# section)
-    // Pattern: CourseCode, Section (G#), C0, Title, credits, schedule lines, rooms, mode
+    // Check BLOCK FORMAT FIRST - this is the most common format
+    // Pattern: CourseCode, Section (G#/D#), C0, Title, credits, schedule lines, rooms, mode
     if (isBlockFormat(lines)) {
+        console.log('Using parseBlockFormat');
         return parseBlockFormat(lines);
     }
 
+    // Check if this is the multi-line format (starts with CCS college code header)
+    // This format has "CCS" on its own line followed by "BACHELOR OF SCIENCE..."
+    if (text.includes('BACHELOR OF SCIENCE') && lines.some(l => l === 'CCS')) {
+        console.log('Using parseMultiLineFormat');
+        return parseMultiLineFormat(lines);
+    }
+
     // Otherwise try the simple one-line-per-course format
+    console.log('Using parseSimpleFormat');
     return parseSimpleFormat(lines);
 }
 
 // Check if the text follows the block format pattern
 function isBlockFormat(lines) {
-    // Look for pattern: course code followed by G# section
+    // Look for pattern: course code followed by G# section, D# section, or CCS-SAT-AM style section
     for (let i = 0; i < lines.length - 1; i++) {
-        if (lines[i].match(/^[A-Z]{2,4}\d{3,4}[A-Z]?$/) &&
-            lines[i + 1].match(/^G\d+$/)) {
+        // Course code: 2-6 uppercase letters followed by 2-4 digits and optional letter
+        if (lines[i].match(/^[A-Z]{2,6}\d{2,4}[A-Z]?$/) &&
+            (lines[i + 1].match(/^[GD]\d+$/) || lines[i + 1].match(/^[A-Z]{2,4}-[A-Z]{2,4}-[A-Z0-9]+$/i))) {
             return true;
         }
     }
@@ -1193,11 +1202,14 @@ function parseBlockFormat(lines) {
     const extractedCourses = [];
     let i = 0;
 
+    console.log('parseBlockFormat called with', lines.length, 'lines');
+    console.log('First 10 lines:', lines.slice(0, 10));
+
     while (i < lines.length) {
         const line = lines[i];
 
-        // Look for course code
-        if (!line.match(/^[A-Z]{2,4}\d{3,4}[A-Z]?$/)) {
+        // Look for course code (2-6 letters followed by 2-4 digits and optional letter)
+        if (!line.match(/^[A-Z]{2,6}\d{2,4}[A-Z]?$/)) {
             i++;
             continue;
         }
@@ -1205,9 +1217,9 @@ function parseBlockFormat(lines) {
         const courseCode = line;
         i++;
 
-        // Section (G5, G3, etc.)
+        // Section (G5, G3, D4, CCS-SAT-AM1, etc.)
         let section = '';
-        if (i < lines.length && lines[i].match(/^G\d+$/)) {
+        if (i < lines.length && (lines[i].match(/^[GD]\d+$/) || lines[i].match(/^[A-Z]{2,4}-[A-Z]{2,4}-[A-Z0-9]+$/i))) {
             section = lines[i];
             i++;
         }
@@ -1247,8 +1259,10 @@ function parseBlockFormat(lines) {
         const roomLines = [];
         while (i < lines.length) {
             const roomLine = lines[i];
-            // Room patterns: ONLINE, NGE###, CASEROOM, FIELD
-            if (roomLine.match(/^(ONLINE|NGE\d*|CASEROOM|FIELD),?$/i)) {
+            // Room patterns: ONLINE, building codes + numbers, TBA, PE areas, etc.
+            // More flexible: match common building codes OR "ONLINE" OR "TBA" OR anything starting with PE-
+            // Also match general pattern of letters + optional numbers
+            if (roomLine.match(/^(ONLINE|TBA|NGE\d+|GLE\d+|RTL\d+|CASEROOM|FIELD|PE-[A-Z0-9\s]+|[A-Z]{2,5}\d{2,4}),?$/i)) {
                 roomLines.push(roomLine.replace(/,\s*$/, '')); // Remove trailing comma
                 i++;
             } else {
@@ -1256,8 +1270,8 @@ function parseBlockFormat(lines) {
             }
         }
 
-        // Skip mode line (Online, In-Person)
-        if (i < lines.length && (lines[i] === 'Online' || lines[i] === 'In-Person')) {
+        // Skip mode line (Online, In-Person, Hybrid)
+        if (i < lines.length && (lines[i] === 'Online' || lines[i] === 'In-Person' || lines[i] === 'Hybrid')) {
             i++;
         }
 
@@ -1646,6 +1660,10 @@ function extractDaysFromText(text) {
 }
 
 // Mobile Wallpaper Functions
+let currentWallpaperColor = '#000000';
+let currentBoxColor = '#2a2a2a';
+let currentTextColor = '#ffffff';
+
 function showMobileWallpaper() {
     if (courses.length === 0) {
         showToast('No courses to display', 'error');
@@ -1658,11 +1676,176 @@ function showMobileWallpaper() {
     // Generate the mobile schedule content
     content.innerHTML = generateMobileScheduleHTML();
 
+    // Apply all colors
+    applyWallpaperColor(currentWallpaperColor);
+    applyBoxColor(currentBoxColor);
+    applyTextColor(currentTextColor);
+
+    // Setup color picker event listeners
+    setupColorPicker();
+
     // Show the modal
     modal.style.display = 'flex';
 
     // Prevent body scroll
     document.body.style.overflow = 'hidden';
+}
+
+function setupColorPicker() {
+    const colorOptions = document.querySelectorAll('.color-option');
+    const customColorInput = document.getElementById('customWallpaperColor');
+
+    colorOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            // Remove active class from all
+            colorOptions.forEach(opt => opt.classList.remove('active'));
+            // Add active to clicked
+            option.classList.add('active');
+            // Apply the color
+            const color = option.dataset.color;
+            currentWallpaperColor = color;
+            applyWallpaperColor(color);
+        });
+    });
+
+    if (customColorInput) {
+        customColorInput.addEventListener('input', (e) => {
+            // Remove active from preset options
+            colorOptions.forEach(opt => opt.classList.remove('active'));
+            // Apply custom color
+            const color = e.target.value;
+            currentWallpaperColor = color;
+            applyWallpaperColor(color);
+        });
+    }
+
+    // Box color options
+    const boxColorOptions = document.querySelectorAll('.box-color-option');
+    const customBoxColor = document.getElementById('customBoxColor');
+
+    boxColorOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            boxColorOptions.forEach(opt => opt.classList.remove('active'));
+            option.classList.add('active');
+            const color = option.dataset.color;
+            currentBoxColor = color;
+            applyBoxColor(color);
+        });
+    });
+
+    if (customBoxColor) {
+        customBoxColor.addEventListener('input', (e) => {
+            boxColorOptions.forEach(opt => opt.classList.remove('active'));
+            const color = e.target.value;
+            currentBoxColor = color;
+            applyBoxColor(color);
+        });
+    }
+
+    // Text color options
+    const textColorOptions = document.querySelectorAll('.text-color-option');
+    const customTextColor = document.getElementById('customTextColor');
+
+    textColorOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            textColorOptions.forEach(opt => opt.classList.remove('active'));
+            option.classList.add('active');
+            const color = option.dataset.color;
+            currentTextColor = color;
+            applyTextColor(color);
+        });
+    });
+
+    if (customTextColor) {
+        customTextColor.addEventListener('input', (e) => {
+            textColorOptions.forEach(opt => opt.classList.remove('active'));
+            const color = e.target.value;
+            currentTextColor = color;
+            applyTextColor(color);
+        });
+    }
+}
+
+function applyBoxColor(color) {
+    const content = document.getElementById('mobileWallpaperContent');
+    const blocks = content.querySelectorAll('.mobile-course-block');
+
+    blocks.forEach(block => {
+        block.style.backgroundColor = color;
+        // Adjust border based on box color
+        const isDark = isColorDark(color);
+        block.style.borderColor = isDark ? '#555' : '#999';
+    });
+}
+
+function applyTextColor(color) {
+    const content = document.getElementById('mobileWallpaperContent');
+    const blocks = content.querySelectorAll('.mobile-course-block');
+
+    blocks.forEach(block => {
+        const code = block.querySelector('.mobile-course-code');
+        const section = block.querySelector('.mobile-course-section');
+        const room = block.querySelector('.mobile-course-room');
+
+        if (code) code.style.color = color;
+        if (section) section.style.color = color;
+        // Room uses slightly more muted version
+        if (room) {
+            const isDark = isColorDark(color);
+            room.style.color = isDark ? '#ccc' : '#666';
+        }
+    });
+}
+
+function applyWallpaperColor(color) {
+    const content = document.getElementById('mobileWallpaperContent');
+    const grid = content.querySelector('.mobile-schedule-grid');
+
+    if (content) {
+        content.style.backgroundColor = color;
+    }
+    if (grid) {
+        grid.style.backgroundColor = color;
+
+        // Adjust text color based on background brightness
+        const isDark = isColorDark(color);
+        grid.style.color = isDark ? '#fff' : '#333';
+
+        // Update grid cell borders and time labels
+        const cells = grid.querySelectorAll('.mobile-grid-cell');
+        const headers = grid.querySelectorAll('.mobile-grid-header');
+        const timeLabels = grid.querySelectorAll('.mobile-time-label');
+
+        cells.forEach(cell => {
+            cell.style.borderColor = isDark ? '#333' : '#ccc';
+        });
+
+        headers.forEach(header => {
+            header.style.color = isDark ? '#888' : '#555';
+            header.style.borderColor = isDark ? '#333' : '#ccc';
+        });
+
+        timeLabels.forEach(label => {
+            label.style.borderColor = isDark ? '#333' : '#ccc';
+            const main = label.querySelector('.time-main');
+            const sub = label.querySelector('.time-sub');
+            if (main) main.style.color = isDark ? '#777' : '#555';
+            if (sub) sub.style.color = isDark ? '#555' : '#888';
+        });
+    }
+}
+
+function isColorDark(hexColor) {
+    // Convert hex to RGB
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+
+    // Calculate luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+    return luminance < 0.5;
 }
 
 function closeMobileWallpaper() {
@@ -1672,19 +1855,26 @@ function closeMobileWallpaper() {
 }
 
 function generateMobileScheduleHTML() {
-    const days = ['M', 'T', 'W', 'TH', 'F', 'S']; // Mon-Sat only (no Sunday)
-    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const dayAbbrev = { 'M': 0, 'T': 1, 'W': 2, 'TH': 3, 'F': 4, 'S': 5 };
+    // Check if schedule has Sunday courses
+    const hasSunday = courses.some(course => course.days && course.days.includes('SU'));
 
-    // Time range: 7:00 AM to 7:00 PM (24 half-hour slots)
+    // Build days array dynamically
+    const days = hasSunday ? ['M', 'T', 'W', 'TH', 'F', 'S', 'SU'] : ['M', 'T', 'W', 'TH', 'F', 'S'];
+    const dayNames = hasSunday ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayAbbrev = hasSunday
+        ? { 'M': 0, 'T': 1, 'W': 2, 'TH': 3, 'F': 4, 'S': 5, 'SU': 6 }
+        : { 'M': 0, 'T': 1, 'W': 2, 'TH': 3, 'F': 4, 'S': 5 };
+    const numDays = days.length;
+
+    // Time range: 7:00 AM to 9:00 PM (28 half-hour slots)
     const startHour = 7;
-    const endHour = 19; // 7 PM
-    const numSlots = (endHour - startHour) * 2; // 24 half-hour slots
+    const endHour = 21; // 9 PM
+    const numSlots = (endHour - startHour) * 2; // 28 half-hour slots
 
     // Create a grid to track course placements
     // grid[dayIndex][slotIndex] = course data or null
     const grid = [];
-    for (let d = 0; d < 6; d++) { // 6 days
+    for (let d = 0; d < numDays; d++) {
         grid[d] = new Array(numSlots).fill(null);
     }
 
@@ -1723,8 +1913,8 @@ function generateMobileScheduleHTML() {
     });
 
     // Build HTML
-    let html = `<div class="mobile-schedule-grid">`;
-    html += `<div class="mobile-grid-container">`;
+    let html = `<div class="mobile-schedule-grid" data-days="${numDays}">`;
+    html += `<div class="mobile-grid-container" style="grid-template-columns: 32px repeat(${numDays}, 1fr); grid-template-rows: 22px repeat(${numSlots}, 1fr);">`;
 
     // Header row
     html += `<div class="mobile-grid-header time-header"></div>`; // Empty corner
@@ -1750,8 +1940,8 @@ function generateMobileScheduleHTML() {
             </div>
         `;
 
-        // Day cells (6 days: Mon-Sat)
-        for (let d = 0; d < 6; d++) {
+        // Day cells (dynamic: Mon-Sat or Mon-Sun)
+        for (let d = 0; d < numDays; d++) {
             const cellClass = isHourStart ? 'mobile-grid-cell hour-start' : 'mobile-grid-cell';
             html += `<div class="${cellClass}" data-day="${d}" data-slot="${slot}">`;
 
@@ -1817,7 +2007,7 @@ async function saveMobileWallpaper() {
         showToast('Generating PNG...', 'info');
 
         const canvas = await html2canvas(content, {
-            backgroundColor: '#000000',
+            backgroundColor: currentWallpaperColor,
             scale: 3, // Higher resolution for iPhone
             useCORS: true,
             logging: false

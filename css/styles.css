@@ -1259,6 +1259,78 @@ footer p {
     padding: 20px;
 }
 
+/* New Sidebar Layout */
+.mobile-wallpaper-layout {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    gap: 20px;
+    padding: 20px;
+}
+
+.wallpaper-sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: rgba(30, 30, 50, 0.95);
+    border-radius: 15px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
+    max-height: calc(100vh - 40px);
+}
+
+.sidebar-section {
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.sidebar-section h4 {
+    margin: 0;
+    color: #00d9ff;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.sidebar-label {
+    display: block;
+    color: #888;
+    font-size: 0.8rem;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.color-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    justify-items: center;
+}
+
+.sidebar-actions {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sidebar-actions .save-wallpaper-btn,
+.sidebar-actions .close-wallpaper-btn {
+    width: 100%;
+    padding: 10px 15px;
+    font-size: 0.9rem;
+}
+
+.wallpaper-preview-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .mobile-wallpaper-header {
     text-align: center;
     margin-bottom: 15px;
@@ -1279,7 +1351,7 @@ footer p {
 .mobile-wallpaper-content {
     background: #000;
     border: 2px solid #333;
-    border-radius: 40px;
+    border-radius: 0;
     overflow: hidden;
     /* iPhone 15 Pro dimensions */
     width: 393px;
@@ -1329,6 +1401,91 @@ footer p {
     box-shadow: 0 5px 20px rgba(0, 217, 255, 0.4);
 }
 
+/* Wallpaper Color Picker - kept for backward compatibility */
+.wallpaper-color-picker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+}
+
+.color-label {
+    color: #888;
+    font-size: 0.9rem;
+    margin-right: 5px;
+}
+
+.color-option {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.color-option:hover {
+    transform: scale(1.15);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.3);
+}
+
+.color-option.active {
+    border: 3px solid #00d9ff;
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+    transform: scale(1.1);
+}
+
+.custom-color-input {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #555;
+    cursor: pointer;
+    padding: 0;
+    overflow: hidden;
+    background: transparent;
+}
+
+.custom-color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.custom-color-input::-webkit-color-swatch {
+    border: none;
+    border-radius: 50%;
+}
+
+/* Box and Text color options share same base style */
+.box-color-option,
+.text-color-option {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.box-color-option:hover,
+.text-color-option:hover {
+    transform: scale(1.15);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.3);
+}
+
+.box-color-option.active,
+.text-color-option.active {
+    border: 3px solid #00d9ff;
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+    transform: scale(1.1);
+}
+
 /* Mobile Wallpaper Grid Schedule - Matching User's Wallpaper */
 .mobile-schedule-grid {
     flex: 1;
@@ -1337,8 +1494,8 @@ footer p {
     background: #000;
     color: #fff;
     font-family: 'SF Pro Display', 'Segoe UI', -apple-system, sans-serif;
-    padding-top: 180px;
-    /* Space for lock screen clock */
+    padding-top: 10px;
+    /* Minimal space above */
 }
 
 .mobile-grid-container {
