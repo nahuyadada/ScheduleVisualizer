@@ -407,3 +407,165 @@
     font-size: 0.7em;
     margin-left: 3px;
 }
+
+/* Paste Schedule Button */
+.paste-schedule-btn {
+    background: linear-gradient(90deg, #9b59b6, #8e44ad);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-size: 0.85rem;
+}
+
+.paste-schedule-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 20px rgba(155, 89, 182, 0.4);
+}
+
+/* Paste Modal */
+.paste-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.paste-modal-overlay.active {
+    display: flex;
+}
+
+.paste-modal {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 1px solid rgba(155, 89, 182, 0.3);
+    border-radius: 20px;
+    max-width: 700px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.paste-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.paste-modal-header h3 {
+    margin: 0;
+    color: #9b59b6;
+}
+
+.paste-modal-close {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.2s;
+    line-height: 1;
+}
+
+.paste-modal-close:hover {
+    color: #e74c3c;
+}
+
+.paste-modal-body {
+    padding: 20px;
+}
+
+.paste-instructions {
+    color: #aaa;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
+
+.paste-format-example {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    overflow-x: auto;
+}
+
+.paste-format-example code {
+    color: #9b59b6;
+    font-family: monospace;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+#pasteScheduleInput {
+    width: 100%;
+    min-height: 200px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    font-family: monospace;
+    font-size: 0.85rem;
+    resize: vertical;
+    margin-bottom: 15px;
+}
+
+#pasteScheduleInput::placeholder {
+    color: #555;
+}
+
+#pasteScheduleInput:focus {
+    outline: none;
+    border-color: #9b59b6;
+}
+
+.paste-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.paste-cancel-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px 20px;
+    border-radius: 20px;
+    color: #aaa;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+}
+
+.paste-cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.paste-import-btn {
+    background: linear-gradient(90deg, #9b59b6, #8e44ad);
+    border: none;
+    padding: 10px 25px;
+    border-radius: 20px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-size: 0.85rem;
+}
+
+.paste-import-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 20px rgba(155, 89, 182, 0.4);
+}

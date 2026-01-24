@@ -67,6 +67,9 @@
             <div class="builder-panel build-panel">
                 <div class="panel-header">
                     <h3>🆕 Your New Schedule</h3>
+                    <button class="paste-schedule-btn" onclick="openPasteModal()" title="Paste schedule from table">
+                        📋 Paste Schedule
+                    </button>
                 </div>
                 <div class="builder-drop-zone" id="builderDropZone">
                     <div class="drop-zone-content" id="dropZoneContent">
@@ -97,6 +100,30 @@
             <p>📅 Schedule Visualizer - Christian Andrey Reyes</p>
         </footer>
     </div>
+    <!-- Paste Schedule Modal -->
+    <div class="paste-modal-overlay" id="pasteModalOverlay" onclick="closePasteModal(event)">
+        <div class="paste-modal" onclick="event.stopPropagation()">
+            <div class="paste-modal-header">
+                <h3>📋 Paste Your Schedule</h3>
+                <button class="paste-modal-close" onclick="closePasteModal()">&times;</button>
+            </div>
+            <div class="paste-modal-body">
+                <p class="paste-instructions">Copy and paste your schedule table from your enrollment system. The format should include:</p>
+                <div class="paste-format-example">
+                    <code>Subject Code | Description | Lec Units | Lab Units | Credited Units | Room # | Schedule</code>
+                </div>
+                <textarea id="pasteScheduleInput" placeholder="Paste your schedule here...
+Example:
+CSIT440    Industry Trends    2    1    3    ONLINE, ONLINE    Thu: 08:00AM - 10:00AM, Sat: 08:00AM - 11:00AM
+CSIT335    Testing and Quality Assurance    3    0    3    ONLINE    Tue, Sat: 03:00PM - 04:30PM"></textarea>
+                <div class="paste-modal-actions">
+                    <button class="paste-cancel-btn" onclick="closePasteModal()">Cancel</button>
+                    <button class="paste-import-btn" onclick="importPastedSchedule()">📥 Import Schedule</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="js/builder.js"></script>
 </body>
 

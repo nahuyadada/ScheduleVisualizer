@@ -1135,6 +1135,8 @@ function parseTextInput(isNewSchedule = false) {
     }
 
     const extractedCourses = parseScheduleFromText(text);
+    const isFromTableFormat = extractedCourses._isTableFormat;
+    delete extractedCourses._isTableFormat; // Clean up the marker
 
     if (extractedCourses.length > 0) {
         courses = [...courses, ...extractedCourses];
@@ -1143,8 +1145,63 @@ function parseTextInput(isNewSchedule = false) {
         textarea.value = '';
         const actionText = isNewSchedule ? 'Loaded' : 'Added';
         showToast(`${actionText} ${extractedCourses.length} course(s)!`, 'success');
+        
+        // Show warning for table format (study load) - no sections included
+        if (isFromTableFormat) {
+            showSectionWarningModal(extractedCourses);
+        }
     } else {
         showToast('Could not parse courses. Check format.', 'error');
+    }
+}
+
+// Show warning modal for missing sections (study load format)
+function showSectionWarningModal(importedCourses) {
+    // Get unique course codes
+    const uniqueCodes = [...new Set(importedCourses.map(c => c.code))];
+    
+    // Create modal HTML
+    const modalHtml = `
+        <div class="section-warning-modal-overlay" id="sectionWarningModal">
+            <div class="section-warning-modal">
+                <div class="section-warning-header">
+                    <span class="warning-icon">⚠️</span>
+                    <h3>Sections Not Included</h3>
+                </div>
+                <div class="section-warning-body">
+                    <p>The Study Load format doesn't include section information (e.g., G1, G2, D3).</p>
+                    <p>You can add sections to your courses later by clicking on a course in the table and editing it.</p>
+                    <div class="imported-courses-list">
+                        <strong>Imported Courses:</strong>
+                        <ul>
+                            ${uniqueCodes.map(code => `<li>${code}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+                <div class="section-warning-footer">
+                    <button class="section-warning-btn dismiss" onclick="closeSectionWarningModal()">
+                        Got it, I'll add sections later
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Show with animation
+    setTimeout(() => {
+        document.getElementById('sectionWarningModal').classList.add('active');
+    }, 10);
+}
+
+// Close section warning modal
+function closeSectionWarningModal() {
+    const modal = document.getElementById('sectionWarningModal');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.remove(), 300);
     }
 }
 
@@ -1157,7 +1214,17 @@ function parseScheduleFromText(text) {
     console.log('Total lines:', lines.length);
     console.log('First few lines:', lines.slice(0, 5));
 
-    // Check BLOCK FORMAT FIRST - this is the most common format
+    // Check for 7-FIELD TABLE FORMAT FIRST
+    // Pattern: Subject Code, Description, Lec Units, Lab Units, Credited Units, Room #, Schedule
+    // Each field on separate line, header row contains "Subject Code" or "Room #" or "Schedule"
+    if (isTableFormat(lines)) {
+        console.log('Using parseTableFormat');
+        const result = parseTableFormat(lines);
+        result._isTableFormat = true; // Mark that this came from table format
+        return result;
+    }
+
+    // Check BLOCK FORMAT - this is the most common format from enrollment systems
     // Pattern: CourseCode, Section (G#/D#), C0, Title, credits, schedule lines, rooms, mode
     if (isBlockFormat(lines)) {
         console.log('Using parseBlockFormat');
@@ -1174,6 +1241,189 @@ function parseScheduleFromText(text) {
     // Otherwise try the simple one-line-per-course format
     console.log('Using parseSimpleFormat');
     return parseSimpleFormat(lines);
+}
+
+// Check if the text follows the 7-field table format
+function isTableFormat(lines) {
+    // Look for header keywords that indicate table format
+    const headerKeywords = ['subject code', 'lec units', 'lab units', 'credited units', 'room #', 'schedule'];
+    const firstFewLines = lines.slice(0, 10).map(l => l.toLowerCase());
+    
+    // Count how many header keywords we find in separate lines
+    let headerCount = 0;
+    for (const keyword of headerKeywords) {
+        if (firstFewLines.some(line => line.includes(keyword) || line === keyword.replace(' ', ''))) {
+            headerCount++;
+        }
+    }
+    
+    // If we find at least 3 header keywords on separate lines, it's likely table format
+    return headerCount >= 3;
+}
+
+// Parse 7-field table format:
+// Subject Code, Description, Lec Units, Lab Units, Credited Units, Room #, Schedule
+function parseTableFormat(lines) {
+    const extractedCourses = [];
+    
+    console.log('parseTableFormat called with', lines.length, 'lines');
+    
+    // Find where headers end - look for the last header keyword
+    let startIndex = 0;
+    const headerKeywords = ['subject code', 'description', 'lec units', 'lab units', 'credited units', 'credited', 'room #', 'room', 'schedule'];
+    
+    for (let i = 0; i < Math.min(lines.length, 15); i++) {
+        const lineLower = lines[i].toLowerCase();
+        if (headerKeywords.some(kw => lineLower === kw || lineLower.includes(kw))) {
+            startIndex = i + 1;
+        }
+    }
+    
+    console.log('Data starts at line:', startIndex);
+    
+    const dataLines = lines.slice(startIndex);
+    const fieldsPerCourse = 7; // Subject Code, Description, Lec Units, Lab Units, Credited Units, Room #, Schedule
+    
+    console.log('Data lines:', dataLines.length);
+    console.log('First 14 data lines:', dataLines.slice(0, 14));
+    
+    for (let i = 0; i + fieldsPerCourse <= dataLines.length; i += fieldsPerCourse) {
+        const code = dataLines[i];
+        const title = dataLines[i + 1];
+        const lecUnits = dataLines[i + 2];
+        const labUnits = dataLines[i + 3];
+        const creditedUnits = dataLines[i + 4];
+        const room = dataLines[i + 5];
+        const schedule = dataLines[i + 6];
+        
+        console.log('Parsing course:', { code, title, room, schedule });
+        
+        // Validate this looks like a course code (should have letters and numbers)
+        if (!code || !/[A-Za-z]/.test(code) || !/\d/.test(code)) {
+            console.log('Skipping invalid code:', code);
+            continue;
+        }
+        
+        // Parse the schedule string
+        const sessions = parseTableScheduleString(schedule, room);
+        
+        console.log('Sessions parsed:', sessions);
+        
+        // Handle multiple rooms
+        const rooms = room ? room.split(',').map(r => r.trim()) : ['TBA'];
+        
+        if (sessions.length === 0) {
+            // No schedule parsed, add as TBA
+            extractedCourses.push({
+                id: Date.now() + Math.random(),
+                code: code,
+                title: title,
+                days: [],
+                startTime: '',
+                endTime: '',
+                room: rooms[0] || 'TBA',
+                isTBA: true
+            });
+        } else {
+            sessions.forEach((session, index) => {
+                extractedCourses.push({
+                    id: Date.now() + Math.random(),
+                    code: code,
+                    title: title,
+                    days: session.days,
+                    startTime: session.startTime,
+                    endTime: session.endTime,
+                    room: rooms[index] || rooms[0] || 'TBA',
+                    isTBA: false
+                });
+            });
+        }
+    }
+    
+    return extractedCourses;
+}
+
+// Parse schedule string from table format
+// Examples: "Thu: 08:00AM - 10:00AM, Sat: 08:00AM - 11:00AM"
+//           "Tue, Sat: 03:00PM - 04:30PM"
+//           "Mon: 03:00PM - 06:00PM, Thu: 03:00PM - 05:00PM"
+function parseTableScheduleString(scheduleStr, defaultRoom) {
+    const sessions = [];
+    
+    if (!scheduleStr) return sessions;
+    
+    console.log('Parsing schedule string:', scheduleStr);
+    
+    // Split by comma, but be careful with "Tue, Sat:" format (days separated by comma)
+    // Strategy: find all "Day: Time - Time" patterns
+    
+    // First, try to match individual schedule entries
+    // Pattern: Day(s): StartTime - EndTime
+    const schedulePattern = /([A-Za-z,\s]+):\s*(\d{1,2}:\d{2}\s*(?:AM|PM))\s*[-–]\s*(\d{1,2}:\d{2}\s*(?:AM|PM))/gi;
+    
+    let match;
+    while ((match = schedulePattern.exec(scheduleStr)) !== null) {
+        const daysStr = match[1].trim();
+        const startTimeRaw = match[2].trim();
+        const endTimeRaw = match[3].trim();
+        
+        console.log('Match found:', { daysStr, startTimeRaw, endTimeRaw });
+        
+        const startTime = normalizeTime(startTimeRaw);
+        const endTime = normalizeTime(endTimeRaw);
+        
+        // Parse days
+        const days = parseTableDays(daysStr);
+        
+        console.log('Days parsed:', days);
+        
+        if (days.length === 0) {
+            // Couldn't parse days, add as single session with original day string
+            sessions.push({
+                days: ['TBA'],
+                startTime: startTime,
+                endTime: endTime
+            });
+        } else {
+            // Create a session for each day
+            days.forEach(day => {
+                sessions.push({
+                    days: [day],
+                    startTime: startTime,
+                    endTime: endTime
+                });
+            });
+        }
+    }
+    
+    return sessions;
+}
+
+// Parse days from table format
+// Handles: "Thu", "Tue, Sat", "Mon", "Wed", "Fri", etc.
+function parseTableDays(daysStr) {
+    const days = [];
+    const dayMappings = {
+        'monday': 'M', 'mon': 'M',
+        'tuesday': 'T', 'tue': 'T', 'tu': 'T',
+        'wednesday': 'W', 'wed': 'W',
+        'thursday': 'TH', 'thu': 'TH', 'thur': 'TH', 'thurs': 'TH',
+        'friday': 'F', 'fri': 'F',
+        'saturday': 'S', 'sat': 'S',
+        'sunday': 'SU', 'sun': 'SU'
+    };
+    
+    // Split by comma or space
+    const dayParts = daysStr.split(/[,\s]+/).filter(d => d.trim());
+    
+    dayParts.forEach(dayPart => {
+        const normalized = dayPart.toLowerCase().trim();
+        if (dayMappings[normalized]) {
+            days.push(dayMappings[normalized]);
+        }
+    });
+    
+    return days;
 }
 
 // Check if the text follows the block format pattern

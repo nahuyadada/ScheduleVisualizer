@@ -1992,3 +1992,124 @@ footer p {
     padding: 40px 20px;
     margin-top: 200px;
 }
+
+/* Section Warning Modal (Study Load Import) */
+.section-warning-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.section-warning-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.section-warning-modal {
+    background: linear-gradient(135deg, #2a2a3e 0%, #1e2a3a 100%);
+    border: 2px solid #f39c12;
+    border-radius: 20px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(243, 156, 18, 0.2);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.section-warning-modal-overlay.active .section-warning-modal {
+    transform: scale(1);
+}
+
+.section-warning-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 25px;
+    border-bottom: 1px solid rgba(243, 156, 18, 0.3);
+}
+
+.section-warning-header .warning-icon {
+    font-size: 2rem;
+}
+
+.section-warning-header h3 {
+    margin: 0;
+    color: #f39c12;
+    font-size: 1.3rem;
+}
+
+.section-warning-body {
+    padding: 20px 25px;
+}
+
+.section-warning-body p {
+    color: #ccc;
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+.imported-courses-list {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.imported-courses-list strong {
+    color: #00d9ff;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.imported-courses-list ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.imported-courses-list li {
+    background: rgba(0, 217, 255, 0.1);
+    color: #00d9ff;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    border: 1px solid rgba(0, 217, 255, 0.3);
+}
+
+.section-warning-footer {
+    padding: 15px 25px 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.section-warning-btn {
+    padding: 12px 25px;
+    border-radius: 25px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+}
+
+.section-warning-btn.dismiss {
+    background: linear-gradient(90deg, #f39c12, #e67e22);
+    color: white;
+}
+
+.section-warning-btn.dismiss:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 20px rgba(243, 156, 18, 0.4);
+}

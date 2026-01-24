@@ -507,3 +507,392 @@ function formatTimeDisplay(time) {
     const displayHour = h > 12 ? h - 12 : (h === 0 ? 12 : h);
     return `${displayHour}:${minutes} ${period}`;
 }
+
+// ========== PASTE SCHEDULE FUNCTIONALITY ==========
+
+function openPasteModal() {
+    document.getElementById('pasteModalOverlay').classList.add('active');
+    document.getElementById('pasteScheduleInput').focus();
+}
+
+function closePasteModal(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('pasteModalOverlay').classList.remove('active');
+    document.getElementById('pasteScheduleInput').value = '';
+}
+
+function importPastedSchedule() {
+    const input = document.getElementById('pasteScheduleInput').value.trim();
+    if (!input) {
+        alert('Please paste your schedule data first!');
+        return;
+    }
+
+    console.log('Raw input:', input);
+    console.log('Lines:', input.split('\n'));
+    
+    const courses = parsePastedSchedule(input);
+    console.log('Parsed courses:', courses);
+    
+    if (courses.length === 0) {
+        alert('Could not parse any courses from the pasted data. Please check the format.');
+        return;
+    }
+
+    // Add parsed courses to the new schedule
+    courses.forEach(course => {
+        // Check if this course already exists
+        const alreadyExists = newScheduleCourses.some(c => 
+            c.code === course.code && c.startTime === course.startTime && c.days.join('') === course.days.join('')
+        );
+        if (!alreadyExists) {
+            // Add to global color map if not present
+            if (!globalCourseColorMap[course.code]) {
+                const usedColors = Object.values(globalCourseColorMap);
+                const availableColors = courseColors.filter(c => !usedColors.includes(c));
+                globalCourseColorMap[course.code] = availableColors.length > 0 
+                    ? availableColors[0] 
+                    : courseColors[Object.keys(globalCourseColorMap).length % courseColors.length];
+            }
+            newScheduleCourses.push(course);
+        }
+    });
+
+    closePasteModal();
+    renderNewSchedule();
+    alert(`Successfully imported ${courses.length} course session(s)!`);
+}
+
+function parsePastedSchedule(text) {
+    const courses = [];
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+    
+    // Check if it's multi-line format (each field on separate line) or tab-separated
+    const isMultiLineFormat = !lines.some(line => line.includes('\t') || /\t/.test(line));
+    
+    // Skip header if present
+    let startIndex = 0;
+    const headerKeywords = ['subject code', 'description', 'lec units', 'lab units', 'credited', 'room', 'schedule'];
+    
+    // Find where headers end
+    for (let i = 0; i < Math.min(lines.length, 10); i++) {
+        const lineLower = lines[i].toLowerCase();
+        if (headerKeywords.some(kw => lineLower.includes(kw))) {
+            startIndex = i + 1;
+        }
+    }
+    
+    if (isMultiLineFormat) {
+        // Multi-line format: each field is on its own line
+        // Fields: Subject Code, Description, Lec Units, Lab Units, Credited Units, Room #, Schedule
+        // That's 7 fields per course
+        
+        const fieldsPerCourse = 7;
+        const dataLines = lines.slice(startIndex);
+        
+        for (let i = 0; i + fieldsPerCourse <= dataLines.length; i += fieldsPerCourse) {
+            const code = dataLines[i];
+            const title = dataLines[i + 1];
+            const lecUnits = dataLines[i + 2];
+            const labUnits = dataLines[i + 3];
+            const creditedUnits = dataLines[i + 4];
+            const room = dataLines[i + 5];
+            const schedule = dataLines[i + 6];
+            
+            // Validate this looks like a course (code should be alphanumeric, schedule should have time)
+            if (!code || !schedule) continue;
+            if (!/[A-Za-z]/.test(code)) continue;
+            
+            const courseData = parseCourseData(code, title, room, schedule);
+            if (courseData && courseData.length > 0) {
+                courses.push(...courseData);
+            }
+        }
+    } else {
+        // Tab-separated format: all fields on one line
+        for (let i = startIndex; i < lines.length; i++) {
+            const line = lines[i];
+            if (!line) continue;
+
+            // Split by tabs or multiple spaces
+            const parts = line.split(/\t+|\s{2,}/).map(p => p.trim()).filter(p => p);
+            
+            if (parts.length >= 2) {
+                const courseData = parseCourseLine(parts);
+                if (courseData) {
+                    courses.push(...courseData);
+                }
+            }
+        }
+    }
+
+    return courses;
+}
+
+function parseCourseData(code, title, room, schedule) {
+    const courses = [];
+    
+    if (!schedule) return null;
+    
+    console.log('Parsing course:', { code, title, room, schedule });
+    
+    // Parse the schedule string
+    const sessions = parseScheduleString(schedule, room);
+    
+    console.log('Sessions parsed:', sessions);
+    
+    // Handle multiple rooms (e.g., "ONLINE, ONLINE" or "CASEROOM, NGE103")
+    const rooms = room ? room.split(',').map(r => r.trim()) : ['TBA'];
+    
+    sessions.forEach((session, index) => {
+        courses.push({
+            code: code,
+            title: title,
+            days: session.days,
+            startTime: session.startTime,
+            endTime: session.endTime,
+            room: rooms[index] || rooms[0] || 'TBA',
+            isTBA: false
+        });
+    });
+
+    return courses.length > 0 ? courses : null;
+}
+
+function parseCourseLine(parts) {
+    const courses = [];
+    
+    // Expected format: Subject Code, Description, Lec Units, Lab Units, Credited Units, Room #, Schedule
+    // But we need at least: Subject Code, Description, and Schedule
+    
+    const code = parts[0];
+    const title = parts[1];
+    
+    // Find the schedule part (usually contains time patterns like "08:00AM" or days like "Mon", "Tue")
+    let schedulePart = '';
+    let roomPart = '';
+    
+    // Look for schedule pattern in parts
+    for (let i = 2; i < parts.length; i++) {
+        const part = parts[i];
+        // Check if this part contains a schedule pattern (day: time - time or time pattern)
+        if (/\d{1,2}:\d{2}\s*(AM|PM)/i.test(part) || /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun|M|T|W|TH|F|S|SU)[,:]/i.test(part)) {
+            schedulePart = part;
+            // The part before schedule might be room
+            if (i > 2) {
+                roomPart = parts[i - 1];
+                // If room looks like units (just a number), skip it
+                if (/^\d+$/.test(roomPart)) {
+                    roomPart = '';
+                }
+            }
+            break;
+        }
+    }
+
+    // If no schedule found by pattern, try the last part
+    if (!schedulePart && parts.length >= 3) {
+        schedulePart = parts[parts.length - 1];
+        if (parts.length >= 4) {
+            roomPart = parts[parts.length - 2];
+            if (/^\d+$/.test(roomPart)) {
+                roomPart = '';
+            }
+        }
+    }
+
+    if (!schedulePart) return null;
+
+    // Parse the schedule string
+    const sessions = parseScheduleString(schedulePart, roomPart);
+    
+    sessions.forEach(session => {
+        courses.push({
+            code: code,
+            title: title,
+            days: session.days,
+            startTime: session.startTime,
+            endTime: session.endTime,
+            room: session.room || roomPart || 'TBA',
+            isTBA: false
+        });
+    });
+
+    return courses.length > 0 ? courses : null;
+}
+
+function parseScheduleString(scheduleStr, defaultRoom) {
+    const sessions = [];
+    
+    // Handle multiple schedules separated by comma
+    // Example: "Thu: 08:00AM - 10:00AM, Sat: 08:00AM - 11:00AM"
+    // Example: "Tue, Sat: 03:00PM - 04:30PM"
+    // Example: "Mon: 12:00PM - 02:00PM, Wed: 03:00PM - 06:00PM"
+    
+    // Split by comma but be careful with "Tue, Sat:" format
+    const scheduleSegments = [];
+    let currentSegment = '';
+    let parenDepth = 0;
+    
+    for (let i = 0; i < scheduleStr.length; i++) {
+        const char = scheduleStr[i];
+        if (char === '(') parenDepth++;
+        if (char === ')') parenDepth--;
+        
+        if (char === ',' && parenDepth === 0) {
+            // Check if this comma separates schedules or days
+            const afterComma = scheduleStr.substring(i + 1).trim();
+            const beforeColon = afterComma.split(':')[0].trim();
+            
+            // If after comma we have a time (starts with number) or a day followed by colon and time
+            if (/^\d/.test(afterComma) || /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)[:\s]/i.test(afterComma)) {
+                // This is a schedule separator
+                if (currentSegment.trim()) {
+                    scheduleSegments.push(currentSegment.trim());
+                }
+                currentSegment = '';
+                continue;
+            }
+        }
+        currentSegment += char;
+    }
+    if (currentSegment.trim()) {
+        scheduleSegments.push(currentSegment.trim());
+    }
+
+    // If no segments found, treat the whole thing as one
+    if (scheduleSegments.length === 0) {
+        scheduleSegments.push(scheduleStr);
+    }
+
+    // Parse each segment
+    scheduleSegments.forEach(segment => {
+        const parsed = parseScheduleSegment(segment);
+        if (parsed) {
+            sessions.push(...parsed);
+        }
+    });
+
+    return sessions;
+}
+
+function parseScheduleSegment(segment) {
+    const sessions = [];
+    
+    console.log('Parsing segment:', JSON.stringify(segment));
+    
+    // Clean up the segment - remove any weird whitespace
+    segment = segment.replace(/\s+/g, ' ').trim();
+    
+    console.log('Cleaned segment:', JSON.stringify(segment));
+    
+    // Pattern: "Day: StartTime - EndTime" or "Day, Day: StartTime - EndTime"
+    // Example: "Thu: 08:00AM - 10:00AM"
+    // Example: "Tue, Sat: 03:00PM - 04:30PM"
+    
+    // More flexible regex - allow time formats like "08:00AM" (no space) or "08:00 AM" (with space)
+    const dayTimeMatch = segment.match(/^([A-Za-z,\s]+):\s*(\d{1,2}:\d{2}\s*(?:AM|PM))\s*[-–]\s*(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
+    
+    console.log('Day-time match:', dayTimeMatch);
+    
+    if (dayTimeMatch) {
+        const daysStr = dayTimeMatch[1].trim();
+        let startTime = dayTimeMatch[2].trim();
+        let endTime = dayTimeMatch[3].trim();
+        
+        console.log('Parsed:', { daysStr, startTime, endTime });
+        
+        // Convert to 24-hour format
+        startTime = convertTo24Hour(startTime);
+        endTime = convertTo24Hour(endTime);
+        
+        // Parse days
+        const days = parseDays(daysStr);
+        
+        console.log('Days parsed:', days);
+        
+        // If no days parsed, use TBA
+        if (days.length === 0) {
+            sessions.push({
+                days: ['TBA'],
+                startTime: startTime,
+                endTime: endTime,
+                room: ''
+            });
+        } else {
+            days.forEach(day => {
+                sessions.push({
+                    days: [day],
+                    startTime: startTime,
+                    endTime: endTime,
+                    room: ''
+                });
+            });
+        }
+    } else {
+        console.log('No day-time match, trying time-only pattern');
+        // Try just time pattern without day prefix
+        const timeMatch = segment.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))\s*[-–]\s*(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
+        console.log('Time match:', timeMatch);
+        if (timeMatch) {
+            let startTime = timeMatch[1].trim();
+            let endTime = timeMatch[2].trim();
+            
+            startTime = convertTo24Hour(startTime);
+            endTime = convertTo24Hour(endTime);
+            
+            sessions.push({
+                days: ['TBA'],
+                startTime: startTime,
+                endTime: endTime,
+                room: ''
+            });
+        }
+    }
+    
+    return sessions;
+}
+
+function parseDays(daysStr) {
+    const days = [];
+    const dayMappings = {
+        'monday': 'M', 'mon': 'M',
+        'tuesday': 'T', 'tue': 'T', 'tu': 'T',
+        'wednesday': 'W', 'wed': 'W',
+        'thursday': 'TH', 'thu': 'TH', 'thur': 'TH', 'thurs': 'TH',
+        'friday': 'F', 'fri': 'F',
+        'saturday': 'S', 'sat': 'S',
+        'sunday': 'SU', 'sun': 'SU'
+    };
+    
+    // Split by comma or space
+    const dayParts = daysStr.split(/[,\s]+/).filter(d => d.trim());
+    
+    dayParts.forEach(dayPart => {
+        const normalized = dayPart.toLowerCase().trim();
+        if (dayMappings[normalized]) {
+            days.push(dayMappings[normalized]);
+        }
+    });
+    
+    return days;
+}
+
+function convertTo24Hour(timeStr) {
+    if (!timeStr) return null;
+    
+    const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+    if (!match) return timeStr;
+    
+    let hours = parseInt(match[1]);
+    const minutes = match[2];
+    const period = match[3]?.toUpperCase();
+    
+    if (period === 'PM' && hours !== 12) {
+        hours += 12;
+    } else if (period === 'AM' && hours === 12) {
+        hours = 0;
+    }
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes}`;
+}
