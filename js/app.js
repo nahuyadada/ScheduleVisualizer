@@ -1665,6 +1665,7 @@ let currentBoxColor = '#2a2a2a';
 let currentTextColor = '#ffffff';
 let currentWallpaperWidth = 393;
 let currentWallpaperHeight = 852;
+let currentTimeFormat = localStorage.getItem('scheduleVisualizerTimeFormat') || '12h';
 
 // Layout position variables (default: fullscreen with no margins)
 let currentTopOffset = 0;
@@ -1709,6 +1710,9 @@ function showMobileWallpaper() {
 
     // Setup layout controls
     setupLayoutControls();
+
+    // Setup time format toggle
+    setupTimeFormatToggle();
 
     // Show the modal
     modal.style.display = 'flex';
@@ -1759,6 +1763,22 @@ function setupLayoutControls() {
             updateWallpaperLayout();
         });
     }
+}
+
+function setupTimeFormatToggle() {
+    const options = document.querySelectorAll('.time-format-option');
+    if (!options.length) return;
+
+    options.forEach(option => {
+        option.classList.toggle('active', option.dataset.format === currentTimeFormat);
+        option.onclick = () => {
+            options.forEach(opt => opt.classList.remove('active'));
+            option.classList.add('active');
+            currentTimeFormat = option.dataset.format === '24h' ? '24h' : '12h';
+            localStorage.setItem('scheduleVisualizerTimeFormat', currentTimeFormat);
+            updateWallpaperLayout();
+        };
+    });
 }
 
 function updateWallpaperLayout() {
@@ -2122,15 +2142,16 @@ function generateMobileScheduleHTML() {
     const bottomSpacePercent = currentBottomSpace;
 
     // Schedule grid internal dimensions
+    const timeColumnWidth = currentTimeFormat === '24h' ? 40 : 44;
     const scheduleWidth = currentWallpaperWidth - 20; // 10px padding each side
     const scheduleAreaHeight = (currentWallpaperHeight * scheduleHeightPercent) / 100;
 
     // Each hour gets equal height
     const hourHeight = scheduleAreaHeight / numHours;
-    const dayWidth = (scheduleWidth - 30) / numDays; // 30px for time column
+    const dayWidth = (scheduleWidth - timeColumnWidth) / numDays; // time column width
 
     // Build HTML with lockscreen layout
-    let html = `<div class="lockscreen-layout">`;
+    let html = `<div class="lockscreen-layout ${currentTimeFormat === '24h' ? 'time-24' : ''}">`;
 
     // Top area (empty for iOS date/time)
     html += `<div class="lockscreen-top" style="height: ${topSpacePercent}%;"></div>`;
@@ -2140,7 +2161,7 @@ function generateMobileScheduleHTML() {
     html += `<div class="schedule-grid-wrapper">`;
 
     // Day headers
-    html += `<div class="day-headers" style="grid-template-columns: 30px repeat(${numDays}, 1fr);">`;
+    html += `<div class="day-headers" style="grid-template-columns: ${timeColumnWidth}px repeat(${numDays}, 1fr);">`;
     html += `<div class="time-header-cell"></div>`; // Empty corner
     dayNames.forEach(day => {
         html += `<div class="day-header-cell">${day}</div>`;
@@ -2151,14 +2172,13 @@ function generateMobileScheduleHTML() {
     html += `<div class="schedule-body">`;
 
     // Time column
-    html += `<div class="time-column">`;
+    html += `<div class="time-column" style="width: ${timeColumnWidth}px;">`;
     for (let h = 0; h < numHours; h++) {
         const hour = startHour + h;
-        const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
-        const period = hour >= 12 ? 'P' : 'A';
+        const timeParts = formatWallpaperTime(hour);
         html += `<div class="time-cell" style="height: ${hourHeight}px;">
-            <span class="time-hour">${displayHour}</span>
-            <span class="time-period">${period}</span>
+            <span class="time-hour">${timeParts.label}</span>
+            <span class="time-period">${timeParts.period}</span>
         </div>`;
     }
     html += `</div>`;
@@ -2202,6 +2222,16 @@ function generateMobileScheduleHTML() {
     html += `</div>`; // lockscreen-layout
 
     return html;
+}
+
+function formatWallpaperTime(hour) {
+    if (currentTimeFormat === '24h') {
+        return { label: `${hour.toString().padStart(2, '0')}:00`, period: '' };
+    }
+
+    const period = hour >= 12 ? 'pm' : 'am';
+    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+    return { label: `${displayHour}:00`, period };
 }
 
 // Abbreviate room names for mobile display

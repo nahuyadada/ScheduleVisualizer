@@ -1475,6 +1475,44 @@ footer p {
     text-align: right;
 }
 
+.time-format-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.time-format-option {
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: #bbb;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.time-format-option:hover {
+    background: rgba(0, 217, 255, 0.12);
+    border-color: rgba(0, 217, 255, 0.4);
+    color: #00d9ff;
+}
+
+.time-format-option.active {
+    background: rgba(0, 217, 255, 0.2);
+    border-color: #00d9ff;
+    color: #00d9ff;
+    box-shadow: 0 0 8px rgba(0, 217, 255, 0.25);
+}
+
+.time-format-hint {
+    margin-top: 6px;
+    font-size: 0.7rem;
+    color: #666;
+    text-align: center;
+}
+
 .color-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -1762,7 +1800,7 @@ footer p {
 }
 
 .time-hour {
-    font-size: 0.55rem;
+    font-size: 0.5rem;
     font-weight: 600;
     color: #666;
     line-height: 1;
@@ -1772,6 +1810,10 @@ footer p {
     font-size: 0.4rem;
     color: #555;
     line-height: 1;
+}
+
+.time-24 .time-period {
+    display: none;
 }
 
 /* Days Container */
