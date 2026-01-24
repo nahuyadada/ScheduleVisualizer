@@ -1778,7 +1778,9 @@ footer p {
 .schedule-body {
     flex: 1;
     display: flex;
-    overflow: hidden;
+    overflow: visible;
+    padding-top: 6px;
+    margin-top: -6px;
 }
 
 /* Time Column */
@@ -1787,6 +1789,7 @@ footer p {
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
+    overflow: visible;
 }
 
 .time-cell {
@@ -1794,9 +1797,27 @@ footer p {
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-end;
-    padding: 1px 3px 0 0;
+    padding: 0 3px 0 0;
     border-right: 1px solid #333;
     box-sizing: border-box;
+    position: relative;
+    overflow: visible;
+}
+
+.time-cell .time-hour {
+    position: absolute;
+    right: 3px;
+    top: 0;
+    transform: translateY(-50%);
+    line-height: 1;
+}
+
+.time-cell .time-period {
+    position: absolute;
+    right: 3px;
+    top: 0.45rem;
+    transform: translateY(-50%);
+    line-height: 1;
 }
 
 .time-hour {
@@ -1832,10 +1853,21 @@ footer p {
 .hour-cell {
     box-sizing: border-box;
     border-bottom: 1px solid #222;
+    position: relative;
 }
 
 .hour-cell:nth-child(odd) {
     border-bottom-color: #333;
+}
+
+.hour-cell::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    border-top: 1px dashed rgba(255, 255, 255, 0.15);
+    pointer-events: none;
 }
 
 /* Course blocks in grid */
