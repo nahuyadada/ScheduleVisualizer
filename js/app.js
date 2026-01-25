@@ -1145,7 +1145,7 @@ function parseTextInput(isNewSchedule = false) {
         textarea.value = '';
         const actionText = isNewSchedule ? 'Loaded' : 'Added';
         showToast(`${actionText} ${extractedCourses.length} course(s)!`, 'success');
-        
+
         // Show warning for table format (study load) - no sections included
         if (isFromTableFormat) {
             showSectionWarningModal(extractedCourses);
@@ -1159,7 +1159,7 @@ function parseTextInput(isNewSchedule = false) {
 function showSectionWarningModal(importedCourses) {
     // Get unique course codes
     const uniqueCodes = [...new Set(importedCourses.map(c => c.code))];
-    
+
     // Create modal HTML
     const modalHtml = `
         <div class="section-warning-modal-overlay" id="sectionWarningModal">
@@ -1186,10 +1186,10 @@ function showSectionWarningModal(importedCourses) {
             </div>
         </div>
     `;
-    
+
     // Add modal to page
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
+
     // Show with animation
     setTimeout(() => {
         document.getElementById('sectionWarningModal').classList.add('active');
@@ -1248,7 +1248,7 @@ function isTableFormat(lines) {
     // Look for header keywords that indicate table format
     const headerKeywords = ['subject code', 'lec units', 'lab units', 'credited units', 'room #', 'schedule'];
     const firstFewLines = lines.slice(0, 10).map(l => l.toLowerCase());
-    
+
     // Count how many header keywords we find in separate lines
     let headerCount = 0;
     for (const keyword of headerKeywords) {
@@ -1256,7 +1256,7 @@ function isTableFormat(lines) {
             headerCount++;
         }
     }
-    
+
     // If we find at least 3 header keywords on separate lines, it's likely table format
     return headerCount >= 3;
 }
@@ -1265,28 +1265,28 @@ function isTableFormat(lines) {
 // Subject Code, Description, Lec Units, Lab Units, Credited Units, Room #, Schedule
 function parseTableFormat(lines) {
     const extractedCourses = [];
-    
+
     console.log('parseTableFormat called with', lines.length, 'lines');
-    
+
     // Find where headers end - look for the last header keyword
     let startIndex = 0;
     const headerKeywords = ['subject code', 'description', 'lec units', 'lab units', 'credited units', 'credited', 'room #', 'room', 'schedule'];
-    
+
     for (let i = 0; i < Math.min(lines.length, 15); i++) {
         const lineLower = lines[i].toLowerCase();
         if (headerKeywords.some(kw => lineLower === kw || lineLower.includes(kw))) {
             startIndex = i + 1;
         }
     }
-    
+
     console.log('Data starts at line:', startIndex);
-    
+
     const dataLines = lines.slice(startIndex);
     const fieldsPerCourse = 7; // Subject Code, Description, Lec Units, Lab Units, Credited Units, Room #, Schedule
-    
+
     console.log('Data lines:', dataLines.length);
     console.log('First 14 data lines:', dataLines.slice(0, 14));
-    
+
     for (let i = 0; i + fieldsPerCourse <= dataLines.length; i += fieldsPerCourse) {
         const code = dataLines[i];
         const title = dataLines[i + 1];
@@ -1295,23 +1295,23 @@ function parseTableFormat(lines) {
         const creditedUnits = dataLines[i + 4];
         const room = dataLines[i + 5];
         const schedule = dataLines[i + 6];
-        
+
         console.log('Parsing course:', { code, title, room, schedule });
-        
+
         // Validate this looks like a course code (should have letters and numbers)
         if (!code || !/[A-Za-z]/.test(code) || !/\d/.test(code)) {
             console.log('Skipping invalid code:', code);
             continue;
         }
-        
+
         // Parse the schedule string
         const sessions = parseTableScheduleString(schedule, room);
-        
+
         console.log('Sessions parsed:', sessions);
-        
+
         // Handle multiple rooms
         const rooms = room ? room.split(',').map(r => r.trim()) : ['TBA'];
-        
+
         if (sessions.length === 0) {
             // No schedule parsed, add as TBA
             extractedCourses.push({
@@ -1339,7 +1339,7 @@ function parseTableFormat(lines) {
             });
         }
     }
-    
+
     return extractedCourses;
 }
 
@@ -1349,34 +1349,34 @@ function parseTableFormat(lines) {
 //           "Mon: 03:00PM - 06:00PM, Thu: 03:00PM - 05:00PM"
 function parseTableScheduleString(scheduleStr, defaultRoom) {
     const sessions = [];
-    
+
     if (!scheduleStr) return sessions;
-    
+
     console.log('Parsing schedule string:', scheduleStr);
-    
+
     // Split by comma, but be careful with "Tue, Sat:" format (days separated by comma)
     // Strategy: find all "Day: Time - Time" patterns
-    
+
     // First, try to match individual schedule entries
     // Pattern: Day(s): StartTime - EndTime
     const schedulePattern = /([A-Za-z,\s]+):\s*(\d{1,2}:\d{2}\s*(?:AM|PM))\s*[-–]\s*(\d{1,2}:\d{2}\s*(?:AM|PM))/gi;
-    
+
     let match;
     while ((match = schedulePattern.exec(scheduleStr)) !== null) {
         const daysStr = match[1].trim();
         const startTimeRaw = match[2].trim();
         const endTimeRaw = match[3].trim();
-        
+
         console.log('Match found:', { daysStr, startTimeRaw, endTimeRaw });
-        
+
         const startTime = normalizeTime(startTimeRaw);
         const endTime = normalizeTime(endTimeRaw);
-        
+
         // Parse days
         const days = parseTableDays(daysStr);
-        
+
         console.log('Days parsed:', days);
-        
+
         if (days.length === 0) {
             // Couldn't parse days, add as single session with original day string
             sessions.push({
@@ -1395,7 +1395,7 @@ function parseTableScheduleString(scheduleStr, defaultRoom) {
             });
         }
     }
-    
+
     return sessions;
 }
 
@@ -1412,17 +1412,17 @@ function parseTableDays(daysStr) {
         'saturday': 'S', 'sat': 'S',
         'sunday': 'SU', 'sun': 'SU'
     };
-    
+
     // Split by comma or space
     const dayParts = daysStr.split(/[,\s]+/).filter(d => d.trim());
-    
+
     dayParts.forEach(dayPart => {
         const normalized = dayPart.toLowerCase().trim();
         if (dayMappings[normalized]) {
             days.push(dayMappings[normalized]);
         }
     });
-    
+
     return days;
 }
 
@@ -1508,31 +1508,55 @@ function parseBlockFormat(lines) {
         // Collect room lines
         const roomLines = [];
         while (i < lines.length) {
-            const roomLine = lines[i];
+            let roomLine = lines[i].replace(/,\s*$/, '').trim(); // Remove trailing comma first
+            
+            // Skip if this is a mode indicator (Online, In-Person, Hybrid)
+            // Note: Mode is title case "Online", rooms are uppercase "ONLINE"
+            if (roomLine.match(/^(Online|In-Person|Hybrid)$/)) {
+                break;
+            }
+            
             // Room patterns: ONLINE, building codes + numbers, TBA, PE areas, etc.
-            // More flexible: match common building codes OR "ONLINE" OR "TBA" OR anything starting with PE-
-            // Also match general pattern of letters + optional numbers
-            if (roomLine.match(/^(ONLINE|TBA|NGE\d+|GLE\d+|RTL\d+|CASEROOM|FIELD|PE-[A-Z0-9\s]+|[A-Z]{2,5}\d{2,4}),?$/i)) {
-                roomLines.push(roomLine.replace(/,\s*$/, '')); // Remove trailing comma
+            // Known room/building prefixes: NGE, GLE, RTL, etc.
+            // Check for known room patterns FIRST (these take priority)
+            const isKnownRoomPrefix = roomLine.match(/^(NGE|GLE|RTL|SJ|AS|PE-)\d*[A-Z]?/i);
+            const isKnownRoomName = roomLine.match(/^(ONLINE|TBA|CASEROOM|FIELD)$/i);
+            
+            // Course codes are typically department codes like IT, CS, CSIT followed by 3+ digits
+            // Room codes like NGE103 should NOT be treated as course codes
+            const isCourseCode = !isKnownRoomPrefix && roomLine.match(/^[A-Z]{2,6}\d{3,4}[A-Z]?$/);
+            
+            if (isKnownRoomPrefix || isKnownRoomName) {
+                roomLines.push(roomLine);
                 i++;
+            } else if (isCourseCode) {
+                // This looks like the next course code, stop here
+                break;
             } else {
                 break;
             }
         }
 
-        // Skip mode line (Online, In-Person, Hybrid)
-        if (i < lines.length && (lines[i] === 'Online' || lines[i] === 'In-Person' || lines[i] === 'Hybrid')) {
+        // Skip mode line (Online, In-Person, Hybrid) - case sensitive!
+        if (i < lines.length && lines[i].match(/^(Online|In-Person|Hybrid)$/)) {
             i++;
         }
 
+        console.log('Course parsed:', { code: courseCode, section, title, scheduleLines, roomLines });
+
         // Parse each schedule line and create course entries
         for (let s = 0; s < scheduleLines.length; s++) {
-            const scheduleLine = scheduleLines[s];
+            let scheduleLine = scheduleLines[s];
             const room = roomLines[s] || roomLines[0] || '';
+
+            // Clean up schedule line - remove trailing comma, extra whitespace
+            scheduleLine = scheduleLine.replace(/,\s*$/, '').trim();
 
             // Parse day and time from schedule line
             // Format: "TH 08:00 AM - 10:00 AM" or "TS 03:00 PM - 04:30 PM"
-            const scheduleMatch = scheduleLine.match(/^([A-Z]+)\s+(\d{1,2}:\d{2}\s*(?:AM|PM))\s*-\s*(\d{1,2}:\d{2}\s*(?:AM|PM))$/i);
+            const scheduleMatch = scheduleLine.match(/^([A-Z]+)\s+(\d{1,2}:\d{2}\s*(?:AM|PM))\s*[-–]\s*(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
+
+            console.log('Schedule line:', scheduleLine, 'Match:', scheduleMatch);
 
             if (scheduleMatch) {
                 const dayStr = scheduleMatch[1].toUpperCase();
@@ -1544,6 +1568,8 @@ function parseBlockFormat(lines) {
 
                 // Parse days (could be combined like "TS" for Tuesday+Saturday)
                 const days = parseMultipleDays(dayStr);
+
+                console.log('Parsed:', { code: courseCode, dayStr, days, startTime, endTime });
 
                 extractedCourses.push({
                     id: Date.now() + Math.random(),
@@ -2252,19 +2278,19 @@ function applyWallpaperColor(color) {
         // Update day headers
         const dayHeaders = content.querySelectorAll('.day-header-cell');
         dayHeaders.forEach(header => {
-            header.style.color = isDark ? '#888' : '#555';
-            header.style.borderColor = isDark ? '#333' : '#ccc';
+            header.style.color = isDark ? '#888' : '#444';
+            header.style.borderColor = isDark ? '#333' : 'rgba(0, 0, 0, 0.25)';
         });
 
         // Update time cells
         const timeCells = content.querySelectorAll('.time-cell');
         timeCells.forEach(cell => {
-            cell.style.borderColor = isDark ? '#333' : '#ccc';
+            cell.style.borderColor = isDark ? '#333' : 'rgba(0, 0, 0, 0.25)';
         });
 
         const timeHours = content.querySelectorAll('.time-hour');
         timeHours.forEach(hour => {
-            hour.style.color = isDark ? '#666' : '#555';
+            hour.style.color = isDark ? '#666' : '#444';
         });
 
         const timePeriods = content.querySelectorAll('.time-period');
@@ -2273,14 +2299,22 @@ function applyWallpaperColor(color) {
         });
 
         // Update grid cells
+        const daysContainer = content.querySelector('.days-container');
+        if (daysContainer) {
+            daysContainer.style.borderRightColor = isDark ? '#333' : 'rgba(0, 0, 0, 0.35)';
+            daysContainer.style.borderBottomColor = isDark ? '#333' : 'rgba(0, 0, 0, 0.35)';
+        }
+
         const dayColumns = content.querySelectorAll('.day-column');
         dayColumns.forEach(col => {
-            col.style.borderColor = isDark ? '#222' : '#ccc';
+            col.style.borderColor = isDark ? '#333' : 'rgba(0, 0, 0, 0.35)';
         });
 
         const hourCells = content.querySelectorAll('.hour-cell');
         hourCells.forEach(cell => {
-            cell.style.borderColor = isDark ? '#222' : '#ccc';
+            cell.style.borderColor = isDark ? '#333' : 'rgba(0, 0, 0, 0.25)';
+            // Update the half-hour line color dynamically using CSS custom property
+            cell.style.setProperty('--half-line-color', isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)');
         });
 
         return;
@@ -2340,7 +2374,7 @@ function generateMobileScheduleHTML() {
 
     // Build days array dynamically
     const days = hasSunday ? ['M', 'T', 'W', 'TH', 'F', 'S', 'SU'] : ['M', 'T', 'W', 'TH', 'F', 'S'];
-    const dayNames = hasSunday ? ['M', 'T', 'W', 'TH', 'F', 'S', 'SU'] : ['M', 'T', 'W', 'TH', 'F', 'S'];
+    const dayNames = hasSunday ? ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'] : ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
     const dayAbbrev = hasSunday
         ? { 'M': 0, 'T': 1, 'W': 2, 'TH': 3, 'F': 4, 'S': 5, 'SU': 6 }
         : { 'M': 0, 'T': 1, 'W': 2, 'TH': 3, 'F': 4, 'S': 5 };
@@ -2426,9 +2460,16 @@ function generateMobileScheduleHTML() {
     for (let h = 0; h < numHours; h++) {
         const hour = startHour + h;
         const timeParts = formatWallpaperTime(hour);
+        const halfTimeParts = formatWallpaperHalfTime(hour);
         html += `<div class="time-cell" style="height: ${hourHeight}px;">
-            <span class="time-hour">${timeParts.label}</span>
-            <span class="time-period">${timeParts.period}</span>
+            <div class="time-main-row">
+                <span class="time-hour">${timeParts.label}</span>
+                <span class="time-period">${timeParts.period}</span>
+            </div>
+            <div class="time-half-row">
+                <span class="time-hour">${halfTimeParts.label}</span>
+                <span class="time-period">${halfTimeParts.period}</span>
+            </div>
         </div>`;
     }
     html += `</div>`;
@@ -2482,6 +2523,16 @@ function formatWallpaperTime(hour) {
     const period = hour >= 12 ? 'pm' : 'am';
     const displayHour = hour % 12 === 0 ? 12 : hour % 12;
     return { label: `${displayHour}:00`, period };
+}
+
+function formatWallpaperHalfTime(hour) {
+    if (currentTimeFormat === '24h') {
+        return { label: `${hour.toString().padStart(2, '0')}:30`, period: '' };
+    }
+
+    const period = hour >= 12 ? 'pm' : 'am';
+    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+    return { label: `${displayHour}:30`, period };
 }
 
 // Abbreviate room names for mobile display

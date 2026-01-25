@@ -786,12 +786,14 @@ function parseScheduleSegment(segment) {
     
     console.log('Cleaned segment:', JSON.stringify(segment));
     
-    // Pattern: "Day: StartTime - EndTime" or "Day, Day: StartTime - EndTime"
+    // Pattern: "Day StartTime - EndTime" or "Day: StartTime - EndTime" or "Day, Day: StartTime - EndTime"
     // Example: "Thu: 08:00AM - 10:00AM"
     // Example: "Tue, Sat: 03:00PM - 04:30PM"
+    // Example: "T 12:00 PM - 02:00 PM" (no colon)
+    // Example: "TH 08:00 AM - 10:00 AM" (no colon)
     
-    // More flexible regex - allow time formats like "08:00AM" (no space) or "08:00 AM" (with space)
-    const dayTimeMatch = segment.match(/^([A-Za-z,\s]+):\s*(\d{1,2}:\d{2}\s*(?:AM|PM))\s*[-–]\s*(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
+    // More flexible regex - colon is optional, allow time formats like "08:00AM" (no space) or "08:00 AM" (with space)
+    const dayTimeMatch = segment.match(/^([A-Za-z,\s]+?):?\s+(\d{1,2}:\d{2}\s*(?:AM|PM))\s*[-–]\s*(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
     
     console.log('Day-time match:', dayTimeMatch);
     
@@ -855,6 +857,9 @@ function parseScheduleSegment(segment) {
 
 function parseDays(daysStr) {
     const days = [];
+    const upper = daysStr.toUpperCase().trim();
+    
+    // Full day name mappings
     const dayMappings = {
         'monday': 'M', 'mon': 'M',
         'tuesday': 'T', 'tue': 'T', 'tu': 'T',
@@ -865,7 +870,36 @@ function parseDays(daysStr) {
         'sunday': 'SU', 'sun': 'SU'
     };
     
-    // Split by comma or space
+    // Handle special abbreviation combinations first (order matters - check longer patterns first)
+    if (upper === 'MTWTHF') {
+        return ['M', 'T', 'W', 'TH', 'F'];
+    } else if (upper === 'MTWTH') {
+        return ['M', 'T', 'W', 'TH'];
+    } else if (upper === 'MTW') {
+        return ['M', 'T', 'W'];
+    } else if (upper === 'THS') {
+        return ['TH', 'S'];
+    } else if (upper === 'TTH') {
+        return ['T', 'TH'];
+    } else if (upper === 'MWF') {
+        return ['M', 'W', 'F'];
+    } else if (upper === 'MW') {
+        return ['M', 'W'];
+    } else if (upper === 'MS') {
+        return ['M', 'S'];
+    } else if (upper === 'TS') {
+        return ['T', 'S'];
+    } else if (upper === 'WF') {
+        return ['W', 'F'];
+    } else if (upper === 'TH') {
+        return ['TH'];
+    } else if (upper === 'SU') {
+        return ['SU'];
+    } else if (['M', 'T', 'W', 'F', 'S'].includes(upper)) {
+        return [upper];
+    }
+    
+    // Split by comma or space for full day names
     const dayParts = daysStr.split(/[,\s]+/).filter(d => d.trim());
     
     dayParts.forEach(dayPart => {
@@ -875,7 +909,26 @@ function parseDays(daysStr) {
         }
     });
     
-    return days;
+    // If no days found yet, try to parse character by character for other combinations
+    if (days.length === 0) {
+        let i = 0;
+        while (i < upper.length) {
+            if (upper.substring(i, i + 2) === 'TH') {
+                days.push('TH');
+                i += 2;
+            } else if (upper.substring(i, i + 2) === 'SU') {
+                days.push('SU');
+                i += 2;
+            } else if (['M', 'T', 'W', 'F', 'S'].includes(upper[i])) {
+                days.push(upper[i]);
+                i += 1;
+            } else {
+                i += 1;
+            }
+        }
+    }
+    
+    return [...new Set(days)]; // Remove duplicates
 }
 
 function convertTo24Hour(timeStr) {

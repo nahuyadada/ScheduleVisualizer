@@ -1804,6 +1804,46 @@ footer p {
     overflow: visible;
 }
 
+/* Main time row (e.g., 7:00, 8:00) */
+.time-main-row {
+    position: absolute;
+    right: 3px;
+    top: 0;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1;
+}
+
+/* Half-hour time row (e.g., 7:30, 8:30) */
+.time-half-row {
+    position: absolute;
+    right: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1;
+}
+
+.time-main-row .time-hour,
+.time-half-row .time-hour {
+    font-size: 0.5rem;
+    font-weight: 600;
+    color: #666;
+    line-height: 1;
+}
+
+.time-main-row .time-period,
+.time-half-row .time-period {
+    font-size: 0.4rem;
+    color: #555;
+    line-height: 1;
+}
+
+/* Legacy support for old structure */
 .time-cell .time-hour {
     position: absolute;
     right: 3px;
@@ -1841,6 +1881,8 @@ footer p {
 .days-container {
     flex: 1;
     display: grid;
+    border-right: 1px solid #222;
+    border-bottom: 1px solid #222;
 }
 
 .day-column {
@@ -1854,6 +1896,7 @@ footer p {
     box-sizing: border-box;
     border-bottom: 1px solid #222;
     position: relative;
+    --half-line-color: rgba(255, 255, 255, 0.25);
 }
 
 .hour-cell:nth-child(odd) {
@@ -1866,7 +1909,7 @@ footer p {
     left: 0;
     right: 0;
     top: 50%;
-    border-top: 1px dashed rgba(255, 255, 255, 0.15);
+    border-top: 1px solid var(--half-line-color);
     pointer-events: none;
 }
 
