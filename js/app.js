@@ -705,7 +705,7 @@ function placeCourseBlocks() {
             block.style.top = `${topOffset}px`;
             block.style.height = `${blockHeight - 4}px`;
 
-            const isOnline = course.room?.toUpperCase().includes('ONLINE');
+            const isOnline = roomIsOnline(course.room);
 
             block.innerHTML = `
                 ${isOnline ? '<div class="online-badge">🌐 ONLINE</div>' : ''}
@@ -724,6 +724,14 @@ function placeCourseBlocks() {
             cell.appendChild(block);
         });
     });
+}
+
+// A room counts as "online" (gets the 🌐 badge) if it's an ONLINE room or a FIELD
+// room — at this school a FIELD assignment means the session is held online.
+function roomIsOnline(room) {
+    if (!room) return false;
+    const upper = room.toUpperCase();
+    return upper.includes('ONLINE') || upper.includes('FIELD');
 }
 
 function timeToMinutes(timeStr) {
@@ -759,7 +767,7 @@ function generateLegend() {
 
     uniqueCourses.forEach((course) => {
         const colorClass = courseColorMap[course.code];
-        const isOnline = courses.filter(c => c.code === course.code).some(c => c.room?.toUpperCase().includes('ONLINE'));
+        const isOnline = courses.filter(c => c.code === course.code).some(c => roomIsOnline(c.room));
         const isTBA = courses.filter(c => c.code === course.code).some(c => c.isTBA);
 
         const item = document.createElement('div');
@@ -1224,6 +1232,17 @@ function parseScheduleFromText(text) {
         return result;
     }
 
+    // Check COURSE OFFERING TABLE FORMAT (enrollment portal column-copy)
+    // Each cell is on its own line: row#, dept, code, title, units, section,
+    // then day/time pairs (day on one line, "HH:MM AM - HH:MM PM" on the next),
+    // then room(s), then slots/enrolled/assessed/closed/mode/notes.
+    if (isOfferingTableFormat(lines)) {
+        console.log('Using parseOfferingTableFormat');
+        const result = parseOfferingTableFormat(lines);
+        result._isTableFormat = true; // Reuse the section-warning flow
+        return result;
+    }
+
     // Check BLOCK FORMAT - this is the most common format from enrollment systems
     // Pattern: CourseCode, Section (G#/D#), C0, Title, credits, schedule lines, rooms, mode
     if (isBlockFormat(lines)) {
@@ -1259,6 +1278,118 @@ function isTableFormat(lines) {
 
     // If we find at least 3 header keywords on separate lines, it's likely table format
     return headerCount >= 3;
+}
+
+// Section cell pattern: 1-3 letters + digits (G1, D4, E5, F2, H3, P1, W1, Z1...).
+// A course code (ENGL014, IT386) can also match this shape, so callers must also
+// require that a day cell follows to distinguish a real section from a code.
+const OFFERING_SECTION_RE = /^[A-Z]{1,3}\d+$/;
+
+// Detect the course-offering table format (column copy from the enrollment portal).
+// Signature: a section cell on its own line, immediately followed by a bare day cell
+// (M/T/W/TH/F/S) and then a bare "HH:MM AM - HH:MM PM" time cell.
+function isOfferingTableFormat(lines) {
+    const timeRangeRe = /^\d{1,2}:\d{2}\s*(?:AM|PM)\s*[-–—]\s*\d{1,2}:\d{2}\s*(?:AM|PM)$/i;
+    for (let i = 0; i + 2 < lines.length; i++) {
+        if (OFFERING_SECTION_RE.test(lines[i]) && isDay(lines[i + 1]) && timeRangeRe.test(lines[i + 2])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Parse the course-offering table format. Each course is one block of single-cell
+// lines. We pivot on the section cell: the course code/title sit just above it, and
+// the day/time session pairs plus room(s) follow it. Each session becomes one entry
+// (sharing code/section/title) so a lecture + lab land on their correct day/time.
+function parseOfferingTableFormat(lines) {
+    const extractedCourses = [];
+    const codeRe = /^[A-Z]{2,6}\d{2,4}[A-Z]?$/;
+    const timeRangeRe = /(\d{1,2}:\d{2}\s*(?:AM|PM))\s*[-–—]\s*(\d{1,2}:\d{2}\s*(?:AM|PM))/i;
+
+    for (let i = 0; i < lines.length; i++) {
+        // A real section cell is followed by a day cell; this rules out the course
+        // code line (followed by its title) which can match the same shape.
+        if (!OFFERING_SECTION_RE.test(lines[i]) || !isDay(lines[i + 1])) continue;
+
+        const section = lines[i];
+
+        // Walk backward to find the course code; the line right after it is the title.
+        let code = '';
+        let title = '';
+        for (let j = i - 1; j >= 0 && j >= i - 6; j--) {
+            if (codeRe.test(lines[j])) {
+                code = lines[j];
+                const next = lines[j + 1];
+                title = next && !/^\d+\.?\d*$/.test(next) && !OFFERING_SECTION_RE.test(next) ? next : '';
+                break;
+            }
+        }
+        if (!code) continue;
+
+        // Collect day/time session pairs that follow the section.
+        let k = i + 1;
+        const sessions = [];
+        while (k + 1 < lines.length && isDay(lines[k]) && isTime(lines[k + 1])) {
+            sessions.push({ dayStr: lines[k], timeStr: lines[k + 1] });
+            k += 2;
+        }
+
+        // Collect the room cell(s) that follow the sessions — one per session.
+        // We do NOT pattern-match room names here: unusual rooms (PE FIELD, OVAL,
+        // a bare FIELD) would be dropped, and the session would then wrongly inherit
+        // the previous room (often ONLINE) via the fallback below. Instead we take
+        // exactly `sessions.length` cells, stopping at the trailing metadata columns
+        // (numeric slots/enrolled, Yes/No, mode) so each session keeps its own room.
+        const rooms = [];
+        while (k < lines.length && rooms.length < sessions.length &&
+            !/^\d+(?:\.\d+)?$/.test(lines[k]) &&            // total slots / enrolled / assessed
+            !/^(?:Yes|No)$/i.test(lines[k]) &&              // is-closed flag
+            !/^(?:Online|In-Person|Hybrid)$/i.test(lines[k]) && // mode of delivery
+            !OFFERING_SECTION_RE.test(lines[k]) &&
+            !codeRe.test(lines[k]) &&
+            !isDay(lines[k])) {
+            rooms.push(lines[k].trim());
+            k++;
+        }
+
+        if (sessions.length === 0) {
+            extractedCourses.push({
+                id: Date.now() + Math.random(),
+                code: code,
+                section: section,
+                title: title,
+                days: ['TBA'],
+                startTime: '',
+                endTime: '',
+                room: rooms[0] || '',
+                isTBA: true
+            });
+        } else {
+            sessions.forEach((sess, idx) => {
+                const days = parseDayString(sess.dayStr);
+                const tm = sess.timeStr.match(timeRangeRe);
+                const startTime = tm ? normalizeTime(tm[1]) : '';
+                const endTime = tm ? normalizeTime(tm[2]) : '';
+                extractedCourses.push({
+                    id: Date.now() + Math.random(),
+                    code: code,
+                    section: section,
+                    title: title,
+                    days: days.length ? days : ['TBA'],
+                    startTime: startTime,
+                    endTime: endTime,
+                    room: rooms[idx] || rooms[0] || '',
+                    isTBA: days.length === 0
+                });
+            });
+        }
+
+        // Advance past this block so the outer loop resumes at the next section.
+        i = k - 1;
+    }
+
+    return extractedCourses;
 }
 
 // Parse 7-field table format:
@@ -1840,7 +1971,7 @@ function isTime(str) {
 function isRoom(str) {
     if (!str) return false;
     const cleaned = str.trim().toUpperCase();
-    return /^(ONLINE|NGE|CASEROOM|FIELD|ROOM|[A-Z]+\d+)\s*(LEC|LAB|LECTURE|LABORATORY)?/i.test(cleaned);
+    return /^(ONLINE|NGE|CASEROOM|FIELD|ROOM|TBA|[A-Z]+\d+)\s*(LEC|LAB|LECTURE|LABORATORY)?/i.test(cleaned);
 }
 
 // Parse simple one-line format

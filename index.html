@@ -4,8 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Paste your class schedule and instantly see a clean weekly timetable.">
     <title>Schedule Visualizer</title>
     <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
@@ -42,27 +46,48 @@
     <div class="container with-sidebar">
         <header>
             <h1>📅 Schedule Visualizer</h1>
-            <p>Enter your class schedule manually or paste from your school portal</p>
+            <p>Paste your class schedule and instantly see a clean weekly timetable.</p>
         </header>
 
+        <ol class="steps-overview" aria-label="How it works">
+            <li><span class="step-dot">1</span> Paste your schedule</li>
+            <li><span class="step-dot">2</span> Review the courses</li>
+            <li><span class="step-dot">3</span> Visualize your week</li>
+        </ol>
+
         <div class="paste-section">
-            <h3>📋 Paste Schedule Text</h3>
-            <div class="tutorial-gif">
-                <img src="assets/EXAMPLE.gif" alt="How to copy your schedule">
+            <div class="section-head">
+                <span class="step-badge">1</span>
+                <div>
+                    <h3>Paste your schedule</h3>
+                    <p class="section-sub">Copy the course table from your school portal and paste it below.</p>
+                </div>
             </div>
-            <p class="paste-hint">Copy the schedule table from your portal and paste it here</p>
+            <details class="tutorial-toggle">
+                <summary>Need help? See how to copy it</summary>
+                <div class="tutorial-gif">
+                    <img src="assets/EXAMPLE.gif" alt="Animation showing how to copy your schedule from the portal">
+                </div>
+            </details>
             <textarea id="pasteArea" placeholder="Paste your schedule data here...
+
 Example:
 CSIT440  Industry Trends  T W  08:00 AM - 10:00 AM  ONLINE LEC
 IT332  Capstone  T  05:00 PM - 07:00 PM  FIELD LEC"></textarea>
             <div class="paste-actions">
                 <button class="parse-btn" onclick="parseTextInput(false)">➕ Add to Schedule</button>
-                <button class="parse-new-btn" onclick="parseTextInput(true)">🔄 New Schedule</button>
+                <button class="parse-new-btn" onclick="parseTextInput(true)">🔄 Start New Schedule</button>
             </div>
         </div>
 
         <div class="manual-entry-section">
-            <h3>✏️ Or Enter Manually</h3>
+            <div class="section-head">
+                <span class="step-badge alt">+</span>
+                <div>
+                    <h3>Or add a course manually</h3>
+                    <p class="section-sub">Fill in the details for a single class.</p>
+                </div>
+            </div>
             <div class="manual-form">
                 <input type="text" id="courseCode" placeholder="Course Code (e.g., CSIT440)">
                 <input type="text" id="courseSection" placeholder="Section (e.g., G1)">
@@ -84,7 +109,13 @@ IT332  Capstone  T  05:00 PM - 07:00 PM  FIELD LEC"></textarea>
         </div>
 
         <div class="extracted-data-section" id="extractedDataSection" style="display: none;">
-            <h2>📋 Extracted Courses</h2>
+            <div class="section-head">
+                <span class="step-badge">2</span>
+                <div>
+                    <h2>Review your courses</h2>
+                    <p class="section-sub">Check the details below. Edit or delete any row that looks off, then save and visualize.</p>
+                </div>
+            </div>
             <div class="courses-table-container">
                 <table class="courses-table" id="coursesTable">
                     <thead>
@@ -103,10 +134,10 @@ IT332  Capstone  T  05:00 PM - 07:00 PM  FIELD LEC"></textarea>
                 </table>
             </div>
             <div class="schedule-save-row">
-                <input type="text" id="scheduleName" placeholder="Schedule name (e.g., 2nd Sem 2025)">
+                <input type="text" id="scheduleName" placeholder="Name this schedule (e.g., 2nd Sem 2025)">
                 <button class="save-schedule-btn" onclick="saveScheduleWithName()">💾 Save Schedule</button>
             </div>
-            <button class="visualize-btn" onclick="visualizeSchedule()">📊 Visualize Schedule</button>
+            <button class="visualize-btn" onclick="visualizeSchedule()">📊 Step 3 · Visualize My Week</button>
         </div>
 
         <div class="saved-schedules-section" id="savedSchedulesSection" style="display: none;">
