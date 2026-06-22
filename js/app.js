@@ -1144,22 +1144,108 @@ function parseTextInput(isNewSchedule = false) {
 
     const extractedCourses = parseScheduleFromText(text);
     const isFromTableFormat = extractedCourses._isTableFormat;
-    delete extractedCourses._isTableFormat; // Clean up the marker
+    const needsCourseCode = extractedCourses._needsCourseCode;
+    delete extractedCourses._isTableFormat;
+    delete extractedCourses._needsCourseCode;
 
     if (extractedCourses.length > 0) {
-        courses = [...courses, ...extractedCourses];
-        saveToStorage();
-        updateCoursesTable();
-        textarea.value = '';
-        const actionText = isNewSchedule ? 'Loaded' : 'Added';
-        showToast(`${actionText} ${extractedCourses.length} course(s)!`, 'success');
-
-        // Show warning for table format (study load) - no sections included
-        if (isFromTableFormat) {
-            showSectionWarningModal(extractedCourses);
+        if (needsCourseCode) {
+            // Pause and ask the user for the course code before committing
+            showCourseCodePrompt(extractedCourses, isNewSchedule, textarea);
+        } else {
+            commitParsedCourses(extractedCourses, isNewSchedule, textarea, isFromTableFormat);
         }
     } else {
         showToast('Could not parse courses. Check format.', 'error');
+    }
+}
+
+// Commit parsed courses to the global list and refresh the UI.
+function commitParsedCourses(extractedCourses, isNewSchedule, textarea, isFromTableFormat) {
+    courses = [...courses, ...extractedCourses];
+    saveToStorage();
+    updateCoursesTable();
+    if (textarea) textarea.value = '';
+    const actionText = isNewSchedule ? 'Loaded' : 'Added';
+    showToast(`${actionText} ${extractedCourses.length} course(s)!`, 'success');
+
+    if (isFromTableFormat) {
+        showSectionWarningModal(extractedCourses);
+    }
+}
+
+// Prompt the user to enter a course code when the format doesn't include one.
+function showCourseCodePrompt(extractedCourses, isNewSchedule, textarea) {
+    const modalHtml = `
+        <div class="section-warning-modal-overlay" id="courseCodePromptModal">
+            <div class="section-warning-modal">
+                <div class="section-warning-header">
+                    <span class="warning-icon">📝</span>
+                    <h3>Enter Course Code</h3>
+                </div>
+                <div class="section-warning-body">
+                    <p>This format doesn't include a course code. Enter it below and it will be applied to all ${extractedCourses.length} parsed session(s).</p>
+                    <input
+                        id="courseCodePromptInput"
+                        type="text"
+                        placeholder="e.g. IT386, NGE203"
+                        style="width:100%;margin-top:12px;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;font-size:1rem;font-family:inherit;"
+                        autocomplete="off"
+                        spellcheck="false"
+                    >
+                </div>
+                <div class="section-warning-footer" style="display:flex;gap:10px;justify-content:flex-end;">
+                    <button class="section-warning-btn dismiss" onclick="closeCourseCodePrompt()">Cancel</button>
+                    <button class="section-warning-btn" onclick="applyCourseCodePrompt()" style="background:linear-gradient(90deg,#00d9ff,#00ff88);color:#0c1422;">Apply</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Store pending data on window so the apply handler can reach it
+    window._pendingCourseCodeCourses = extractedCourses;
+    window._pendingCourseCodeNewSchedule = isNewSchedule;
+    window._pendingCourseCodeTextarea = textarea;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    setTimeout(() => {
+        const modal = document.getElementById('courseCodePromptModal');
+        if (modal) modal.classList.add('active');
+        const input = document.getElementById('courseCodePromptInput');
+        if (input) input.focus();
+    }, 10);
+
+    // Allow Enter key to submit
+    document.getElementById('courseCodePromptInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') applyCourseCodePrompt();
+    });
+}
+
+function applyCourseCodePrompt() {
+    const input = document.getElementById('courseCodePromptInput');
+    const code = (input ? input.value.trim().toUpperCase() : '');
+    if (!code) {
+        input.style.borderColor = '#e74c3c';
+        input.focus();
+        return;
+    }
+
+    const pending = window._pendingCourseCodeCourses || [];
+    pending.forEach(c => { c.code = code; });
+
+    closeCourseCodePrompt();
+    commitParsedCourses(pending, window._pendingCourseCodeNewSchedule, window._pendingCourseCodeTextarea, false);
+
+    delete window._pendingCourseCodeCourses;
+    delete window._pendingCourseCodeNewSchedule;
+    delete window._pendingCourseCodeTextarea;
+}
+
+function closeCourseCodePrompt() {
+    const modal = document.getElementById('courseCodePromptModal');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.remove(), 300);
     }
 }
 
@@ -1240,6 +1326,16 @@ function parseScheduleFromText(text) {
         console.log('Using parseOfferingTableFormat');
         const result = parseOfferingTableFormat(lines);
         result._isTableFormat = true; // Reuse the section-warning flow
+        return result;
+    }
+
+    // Check ALTERNATING FORMAT — portal view where each attribute pair is on two lines
+    // with the first line having a trailing comma: C0 → time1, → time2 → day1, → day2 → ...
+    if (isAlternatingFormat(lines)) {
+        console.log('Using parseAlternatingFormat');
+        const result = parseAlternatingFormat(lines);
+        result._isTableFormat = true;
+        result._needsCourseCode = true; // No course code in this format — prompt user
         return result;
     }
 
@@ -1555,6 +1651,93 @@ function parseTableDays(daysStr) {
     });
 
     return days;
+}
+
+// Detect the alternating-pair format:
+//   Section (possibly slash-separated)
+//   C0
+//   Time1,    ← trailing comma marks "pair line 1"
+//   Time2
+//   Day1,
+//   Day2
+//   Room1,
+//   Room2
+//   Type1,    ← LAB / LEC
+//   Type2
+//   X/Y       ← enrollment count
+//   Hybrid|Online|In-Person
+//   Open|Closed
+function isAlternatingFormat(lines) {
+    const timeRe = /\d{1,2}:\d{2}\s*(?:AM|PM)/i;
+    for (let i = 0; i + 1 < lines.length; i++) {
+        if (/^C0$/.test(lines[i]) && timeRe.test(lines[i + 1])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Parse the alternating-pair format. Each block is anchored on a C0 line;
+// the line immediately before C0 is the section (e.g. "B1G/G4", "G3", "G5/C5").
+// The 8 lines after C0 form 4 paired attributes (time, day, room, type),
+// followed by 3 metadata lines (enrollment, mode, status) that are skipped.
+function parseAlternatingFormat(lines) {
+    const extractedCourses = [];
+    const timeRe = /(\d{1,2}:\d{2}\s*(?:AM|PM))\s*[-–—]\s*(\d{1,2}:\d{2}\s*(?:AM|PM))/i;
+    const enrollmentRe = /^\d+\/\d+$/;
+    const modeRe = /^(Hybrid|Online|In-Person)$/i;
+    const statusRe = /^(Open|Closed)$/i;
+    const clean = s => (s || '').replace(/,\s*$/, '').trim();
+
+    let i = 0;
+    while (i < lines.length) {
+        if (!/^C0$/.test(lines[i])) { i++; continue; }
+
+        const section = i > 0 ? clean(lines[i - 1]) : '';
+        i++; // advance past C0
+
+        // Need at least 8 data lines after C0
+        if (i + 7 >= lines.length) break;
+
+        const time1 = clean(lines[i++]);
+        const time2 = clean(lines[i++]);
+        const day1  = clean(lines[i++]);
+        const day2  = clean(lines[i++]);
+        const room1 = clean(lines[i++]);
+        const room2 = clean(lines[i++]);
+        const type1 = clean(lines[i++]);
+        const type2 = clean(lines[i++]);
+
+        // Skip enrollment / mode / status lines
+        while (i < lines.length &&
+            (enrollmentRe.test(lines[i]) || modeRe.test(lines[i]) || statusRe.test(lines[i]))) {
+            i++;
+        }
+
+        const sessions = [
+            { dayStr: day1, timeStr: time1, room: (room1 + (type1 ? ' ' + type1 : '')).trim() },
+            { dayStr: day2, timeStr: time2, room: (room2 + (type2 ? ' ' + type2 : '')).trim() }
+        ];
+
+        sessions.forEach(sess => {
+            if (!sess.dayStr || !sess.timeStr) return;
+            const days = parseDayString(sess.dayStr.toUpperCase());
+            const tm = sess.timeStr.match(timeRe);
+            extractedCourses.push({
+                id: Date.now() + Math.random(),
+                code: '',
+                section: section,
+                title: '',
+                days: days.length ? days : ['TBA'],
+                startTime: tm ? normalizeTime(tm[1]) : '',
+                endTime:   tm ? normalizeTime(tm[2]) : '',
+                room: sess.room,
+                isTBA: !tm
+            });
+        });
+    }
+
+    return extractedCourses;
 }
 
 // Check if the text follows the block format pattern
